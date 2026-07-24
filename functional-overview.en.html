@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HPay — Functional Overview by Role</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --paper:#F4F5F2; --surface:#FFFFFF; --surface-2:#FBFBF9;
+  --ink:#151A17; --ink-2:#4B534D; --ink-3:#7C837D;
+  --line:#DFE1DB; --line-soft:#ECEDE9;
+  --brand:#0F5C4E; --brand-ink:#0A3E34; --brand-tint:#E4F1EC;
+  --business:#9A4A22; --business-ink:#6E3417; --business-tint:#F7EBE1;
+  --admin:#33527D; --admin-ink:#23395A; --admin-tint:#E7ECF4;
+  --platform:#5C4A8C; --platform-ink:#3E3161; --platform-tint:#EEEBF7;
+  --ok:#1D7A4C; --warn:#A66A0E; --bad:#B23A3A;
+  --font-head:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,'Cascadia Code',Consolas,monospace;
+  --radius:10px;
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+  --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+  --line:#31363B; --line-soft:#282C31;
+  --brand:#4FC9A8; --brand-ink:#8FE0C7; --brand-tint:#173029;
+  --business:#E1935E; --business-ink:#F0BE95; --business-tint:#33241A;
+  --admin:#8FADDA; --admin-ink:#BBCFEF; --admin-tint:#1D2A3E;
+  --platform:#B6A6E8; --platform-ink:#D2C6F4; --platform-tint:#251F3A;
+  --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+    --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+    --line:#31363B; --line-soft:#282C31;
+    --brand:#4FC9A8; --brand-ink:#8FE0C7; --brand-tint:#173029;
+    --business:#E1935E; --business-ink:#F0BE95; --business-tint:#33241A;
+    --admin:#8FADDA; --admin-ink:#BBCFEF; --admin-tint:#1D2A3E;
+    --platform:#B6A6E8; --platform-ink:#D2C6F4; --platform-tint:#251F3A;
+    --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;font-size:15.5px}
+.wrap{max-width:1120px;margin:0 auto;padding:36px 24px 120px}
+a{color:var(--brand)}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;text-wrap:balance;color:var(--ink);margin:0}
+
+header.top{display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+header.top h1{font-size:34px;letter-spacing:-.01em}
+header.top .lede{max-width:720px;color:var(--ink-2);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+.langbar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-3)}
+.langbar a{font-weight:600;text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
+.langbar a.current{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+nav.rolenav{position:sticky;top:0;background:var(--paper);z-index:20;padding:14px 0;margin:0 0 28px;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+nav.rolenav a{text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+nav.rolenav a:hover{border-color:var(--ink-3)}
+
+section.role{margin:56px 0}
+.role-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.role-head h2{font-size:24px}
+.role-tag{font-size:11.5px;font-weight:700;letter-spacing:.03em;padding:3px 10px;border-radius:99px}
+.role-desc{color:var(--ink-2);max-width:760px;margin:8px 0 22px;font-size:15px}
+
+.g-personal .role-tag{background:var(--brand-tint);color:var(--brand-ink)}
+.g-business .role-tag{background:var(--business-tint);color:var(--business-ink)}
+.g-admin .role-tag{background:var(--admin-tint);color:var(--admin-ink)}
+.g-platform .role-tag{background:var(--platform-tint);color:var(--platform-ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{
+  text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;cursor:pointer;font-family:var(--font-body);color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;transition:border-color .12s ease,transform .12s ease;
+}
+.card:hover{border-color:var(--ink-3)}
+.card:active{transform:scale(0.99)}
+.card .num{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+.card .title{font-weight:600;font-size:15px;line-height:1.35}
+.card .sub{font-size:13px;color:var(--ink-2);line-height:1.45}
+.card .badge{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;margin-top:2px}
+.g-personal .card .badge{background:var(--brand-tint);color:var(--brand-ink)}
+.g-business .card .badge{background:var(--business-tint);color:var(--business-ink)}
+.g-admin .card .badge{background:var(--admin-tint);color:var(--admin-ink)}
+.g-platform .card .badge{background:var(--platform-tint);color:var(--platform-ink)}
+
+.overlay{position:fixed;inset:0;background:rgba(10,12,10,.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;max-width:760px;width:100%;padding:0;box-shadow:0 24px 64px rgba(0,0,0,.28);margin-bottom:5vh}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:24px 26px 16px;border-bottom:1px solid var(--line-soft)}
+.modal-head .badge{font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.modal-head h3{font-size:21px;line-height:1.3}
+.modal-close{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;flex:none}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:20px 26px 26px;display:flex;flex-direction:column;gap:20px}
+.modal-body .desc{color:var(--ink-2);font-size:14.5px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:12px;font-size:13.5px}
+.steps li .dot{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-2)}
+.steps li .txt{padding-top:2px;color:var(--ink)}
+.diagram-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;margin-bottom:8px}
+.diagram-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram-box svg{max-width:100%;height:auto}
+.diagram-box .loading{font-size:13px;color:var(--ink-3);font-style:italic}
+
+footer{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:640px){header.top h1{font-size:27px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="langbar">
+    <span>🌐</span>
+    <a href="functional-overview.vi.html">Tiếng Việt</a>
+    <a href="functional-overview.en.html" class="current">English</a>
+    <span style="margin-left:auto"></span>
+    <a href="technical-overview.en.html">→ See the technical guide</a>
+  </div>
+  <div class="eyebrow">Product introduction document · for presenting to the team</div>
+  <h1>HPay — a digital wallet &amp; business payments platform</h1>
+  <p class="lede">HPay is an end-to-end digital wallet system, built in the style of popular US wallet apps (Venmo, Cash App, Revolut): instant P2P transfers, payment requests &amp; split bills, plus a <b>business wallet with two-layer dual-control approval (maker–checker)</b> — where one person creates a payout request and one or more other people must sign off before the money actually moves. Every dollar flows through a <b>configurable workflow engine</b> sitting on top of an <b>immutable double-entry ledger</b>.</p>
+  <div class="chips">
+    <span class="chip">3 roles: personal → business → operations</span>
+    <span class="chip">Mobile app (Expo/React Native)</span>
+    <span class="chip">Admin web (React)</span>
+    <span class="chip">Backend in Go</span>
+  </div>
+</header>
+
+<nav class="rolenav" id="rolenav"></nav>
+
+<div id="sections"></div>
+
+<footer>
+  <span>HPay · functional guide · click any card for details + a flow diagram</span>
+  <span>Technical guide (ACID, workflow engine, AI…) → <a href="technical-overview.en.html">technical-overview.en.html</a></span>
+</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <span class="badge" id="m-badge"></span>
+        <h3 id="m-title"></h3>
+      </div>
+      <button class="modal-close" id="m-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="desc" id="m-desc"></p>
+      <div>
+        <div class="diagram-label">Key steps</div>
+        <ol class="steps" id="m-steps"></ol>
+      </div>
+      <div>
+        <div class="diagram-label">Flow diagram</div>
+        <div class="diagram-box" id="m-diagram"><span class="loading">Rendering diagram…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  {id:'personal', cls:'g-personal', tag:'PERSONAL USER', title:'👤 Personal user — Mobile app',
+   desc:'Anyone can download the app and sign up with a phone number. One personal wallet covers everyday money needs: topping up, sending money to friends, requesting money back, and saving.'},
+  {id:'business', cls:'g-business', tag:'BUSINESS WALLET', title:'🏢 Business wallet — Maker &amp; Checker',
+   desc:'An organization (a company, a shop, a team...) opens a business wallet inside the app. Two roles are strictly separated: a <b>Maker</b> — who proposes/creates a payout request — and a <b>Checker</b> — who has the authority to sign off before money moves. One organization can have multiple checkers across multiple approval levels.'},
+  {id:'admin', cls:'g-admin', tag:'OPERATIONS', title:'🛡️ Operations team — Admin web',
+   desc:'HPay staff (not customers) use a separate admin website to oversee the whole system: reviewing identity documents, monitoring fraud, resolving stuck transactions, reconciling money — and even they must go through the same dual-control mechanism for sensitive actions (refunds, account locks).'},
+  {id:'platform', cls:'g-platform', tag:'RUNS IN THE BACKGROUND', title:'⚙️ Background infrastructure — not tied to any one role',
+   desc:'Mechanisms that run behind every action above. Users never see them directly, but they are exactly what makes HPay trustworthy: fraud detection, protection against losing money on network failures, and self-healing when something breaks.'},
+];
+
+const FEATURES = [
+{g:'personal', title:'Sign up &amp; log in', badge:'Onboarding',
+ desc:'Sign up with a phone number and password. Sessions use a self-rotating access/refresh token pair — if a refresh token is stolen and reused, every session on every device is revoked immediately. After that, the app can be unlocked quickly with Face ID/fingerprint.',
+ steps:['Enter phone number + password','The system issues a short-lived access token and a long-lived refresh token','The app silently refreshes the access token when it expires — no forced re-login','Next time: Face ID/fingerprint unlocks the app quickly — but it does NOT replace the PIN required to move money'],
+ mermaid:`flowchart LR
+  U["User"] -->|"phone + password"| API["Login API"]
+  API --> TK["Issues access + refresh token"]
+  TK --> APP["App stores the session"]
+  APP -->|"next app open"| FID["Face ID / fingerprint"]
+  FID --> APP2["Quick app unlock"]
+  APP2 -.->|"moving money still needs"| PIN["Separate PIN/OTP entry"]`},
+
+{g:'personal', title:'Identity verification (KYC)', badge:'KYC',
+ desc:'Take a photo of your ID card plus a selfie. An AI reads the images and automatically scores their trustworthiness — a high score approves instantly, a borderline score routes to an ops reviewer (with the AI\'s explanation attached), and a very low score is rejected outright. Once verified, your daily transaction limit goes up.',
+ steps:['Photograph your ID document','Take a selfie for face matching','AI (Claude vision) returns a trust score plus reasons','High score → auto-approved · borderline score → human reviewer · low score → rejected','Once approved: your daily transaction limit increases based on your KYC tier'],
+ mermaid:`flowchart LR
+  A["Photo of ID + selfie"] --> B["AI scoring\\n(score + reasons)"]
+  B -->|"high score"| C["✅ Auto-approved"]
+  B -->|"borderline"| D["🧑 Human reviewer\\n(sees the AI's reasoning)"]
+  B -->|"low score"| E["❌ Rejected"]
+  C --> F["Daily transaction limit increases"]
+  D -->|"approves"| F`},
+
+{g:'personal', title:'Top up the wallet', badge:'Topup',
+ desc:'Top up from a bank (simulated in this demo) with OTP verification. This action is safe to retry — the system never credits the same top-up twice.',
+ steps:['Choose the top-up amount','Verify with an OTP sent to your phone','The bank confirms (mock) → money lands in the wallet instantly','If the app freezes/loses connection mid-way and the user retries: the system recognizes it as the same request and does not double-credit'],
+ mermaid:`flowchart LR
+  U["Choose amount"] --> OTP["Verify OTP"]
+  OTP --> BANK["Bank confirms (mock)"]
+  BANK --> LEDGER["Ledger entry: credit the wallet"]
+  U -.->|"retries out of worry"| ID["Same idempotency key"]
+  ID -.-> LEDGER`},
+
+{g:'personal', title:'P2P money transfer', badge:'Core',
+ desc:'Send money instantly to another user by phone number. Before confirming, the app clearly shows the fee (if any). After sending, there is a real-time progress screen instead of just "success"/"failed" — because a whole chain of processing steps runs behind the scenes.',
+ steps:['Enter the recipient\'s phone number and the amount','Preview the transaction fee (if any)','Confirm with a PIN','The transaction runs through the workflow engine — a status screen tracks it','The recipient gets the money and both sides are notified'],
+ mermaid:`sequenceDiagram
+  actor U as Sender
+  participant BE as Backend
+  actor R as Recipient
+  U->>BE: Enter phone + amount, review fee
+  U->>BE: Confirm with PIN
+  BE-->>U: Processing… (tracked live)
+  BE->>BE: Fraud check, debit, credit
+  BE-->>U: 🔔 Sent successfully
+  BE-->>R: 🔔 You just received money`},
+
+{g:'personal', title:'Request Money &amp; Split Bill', badge:'Request Money',
+ desc:'Like Venmo/MoMo: nudge someone to pay you back a specific amount, with a note explaining why. "Split Bill" creates several requests at once for a group of people — with a visual tracking screen (avatars of people who\'ve paid stand out, unpaid ones are dimmed) plus a progress bar showing how much has been collected out of the total.',
+ steps:['Pick who to remind, the amount, and the reason','Send the request — the other person is notified, with a 72-hour deadline','They tap "Pay" → the money moves exactly like a normal P2P transfer','The request automatically flips to "paid" and the requester is notified','For a group: see a progress bar plus who has/hasn\'t paid, and "nudge" the ones still owing'],
+ mermaid:`sequenceDiagram
+  actor A as Requester
+  actor B as Payer
+  participant BE as Backend
+  A->>BE: Create request (amount, reason, 72h deadline)
+  BE-->>B: 🔔 Payment reminder
+  B->>BE: Taps "Pay" → money moves via the P2P flow
+  BE-->>A: 🔔 "B just paid you"
+  Note over A,B: Split Bill = several requests sharing one group,<br/>the tracking screen shows % collected`},
+
+{g:'personal', title:'Receive money via QR', badge:'QR',
+ desc:'Generate a personal QR code so others can scan and send money without typing a phone number. The QR can be pre-loaded with a specific amount (e.g. a shop owner generating a $2 QR) so the payer just scans and confirms.',
+ steps:['Open "My QR"','(Optional) pre-fill the amount to collect','The payer scans the code with the app\'s camera','The app pre-fills the recipient (and the amount, if set) — the payer just confirms'],
+ mermaid:`flowchart LR
+  A["Wallet owner generates QR"] -->|"amount pre-filled (optional)"| Q["Signed QR code"]
+  B["Payer scans the QR"] --> Q
+  Q --> F["Pre-filled transfer form"]
+  F --> C["Confirm with PIN → money moves"]`},
+
+{g:'personal', title:'Savings vaults &amp; auto round-up', badge:'Vaults',
+ desc:'Create separate "vaults" for different goals (a trip, a purchase...) — the money stays inside your account but is set apart from everyday spending. "Round-up" can be turned on for a vault — every time you make a transfer, the spare change is automatically swept into it.',
+ steps:['Create a vault, name it, optionally set a target amount','Deposit / withdraw at any time — each move is a recorded transaction','Turn on "round-up" for the vault you want','From then on, every P2P transfer\'s rounding remainder is automatically deposited into it'],
+ mermaid:`flowchart LR
+  V["Create a savings vault"] --> ON["Enable round-up"]
+  P["Any P2P transfer"] -->|"round-up enabled"| R["Compute the rounding remainder"]
+  R --> V2["Auto-deposit into the vault"]
+  V -.-> D["Manual deposit / withdrawal"]`},
+
+{g:'personal', title:'History &amp; transaction timeline', badge:'History',
+ desc:'Review every past transaction. Each one has a detailed step-by-step timeline (not just "success/failed" but the steps in between too) — useful when you need to look something up. The balance is hidden by default so it isn\'t exposed when the app is open in public.',
+ steps:['Open the history list, filter by date/transaction type','Tap a transaction for its detail view','View the timeline: each processing step and its timestamp','The wallet balance is hidden by default — tap to reveal it temporarily'],
+ mermaid:`flowchart LR
+  L["History list"] --> D["Detail of one transaction"]
+  D --> TL["Step-by-step timeline"]
+  H["Home screen"] -.->|"hidden by default"| BAL["Balance"]
+  BAL -.->|"tap to reveal"| BAL2["Shown temporarily"]`},
+
+{g:'business', title:'Create an organization &amp; invite members', badge:'Maker · Org admin',
+ desc:'An org administrator creates a business wallet, invites members by phone number, and assigns them a role: org admin, maker (who creates payout requests), or checker (who signs off, with an approval level such as L1/L2...).',
+ steps:['Create the organization, give it a name','Invite members by phone number','Assign roles: admin / maker / checker + a level for checkers','Members appear in the organization with the right permissions'],
+ mermaid:`flowchart LR
+  A["Org admin"] --> C["Creates the organization"]
+  C --> I["Invites members (by phone)"]
+  I --> R{"Assigns a role"}
+  R -->|"maker"| M["Can create payout requests"]
+  R -->|"checker L1/L2..."| K["Can sign off at that level"]`},
+
+{g:'business', title:'Set approval policy', badge:'Policy',
+ desc:'Define rules for how much sign-off a payout needs, based on its amount. Example: under $200 needs just one L1 checker signature; above $200 needs both an L1 and an L2 signature. Policies can be edited later, but any request already pending keeps the policy that was active when it was created.',
+ steps:['Name the policy and its applicable amount range','Define each "tier": which checker level, how many signatures required','Save the policy — it\'s versioned, and the old version still governs any requests already pending'],
+ mermaid:`flowchart TB
+  P["Approval policy"] --> T1["Tier 1: under $200 → 1 signature from L1"]
+  P --> T2["Tier 2: over $200 → 1 signature from L1 + 1 from L2"]
+  P -->|"admin edits the policy"| P2["New version"]
+  P2 -.->|"does not affect"| OLD["Requests already pending keep the old policy"]`},
+
+{g:'business', title:'Create a payout request', badge:'Maker',
+ desc:'A maker creates a request to pay a recipient, with a reason attached. The request doesn\'t move money right away — it pauses, waiting for enough signatures under the policy that applies to that amount.',
+ steps:['Choose the recipient, amount, and reason','The system automatically looks up the matching policy for this amount','The request is created in "pending approval" status; the relevant checkers are notified','The maker tracks approval progress on the "Order status" screen'],
+ mermaid:`flowchart LR
+  M["Maker creates a payout request"] --> POL["Looks up the policy for this amount"]
+  POL --> W["Request pauses, waiting for approval"]
+  W --> N["Relevant checkers are notified"]`},
+
+{g:'business', title:'Track payout order status', badge:'Maker',
+ desc:'After creating a request, the maker sees a timeline-style screen: request created → which checker signed → who\'s next → money transferred. No guessing where the request stands.',
+ steps:['Open "Order status" right after creating the request','See each milestone: created → L1 signature → L2 signature → money moved','Each milestone shows a timestamp and the name of who signed','Once fully signed: the money moves automatically, no further action needed'],
+ mermaid:`flowchart TB
+  S1["✅ You created the request"] --> S2["✅ Level 1 signed"]
+  S2 --> S3["🔵 Level 2 — waiting to sign"]
+  S3 --> S4["⚪ Money transfer executes"]`},
+
+{g:'business', title:'Cancel a pending order', badge:'Maker',
+ desc:'If a request hasn\'t been signed yet (or is only partly signed), the maker who created it can cancel it — say, they entered the wrong amount. Cancellation isn\'t possible once a request is fully approved, rejected, or expired.',
+ steps:['Open a request that\'s still "pending approval"','Tap "Cancel order" and confirm — this can\'t be undone','The request moves to "cancelled" — no one can sign it anymore'],
+ mermaid:`flowchart LR
+  M["Maker opens a pending request"] --> H["Taps Cancel order"]
+  H --> C{"Confirm?"}
+  C -->|"yes"| X["Request → cancelled, no longer signable"]
+  C -->|"no"| M`},
+
+{g:'business', title:'Approval inbox (My Tasks)', badge:'Checker',
+ desc:'A checker sees a list of exactly the requests waiting for their own signature — filtered to their approval level and their turn (if a request needs both L1 and L2, the L2 item only appears once L1 has already signed).',
+ steps:['Open the "Waiting for my approval" inbox','The list only shows requests at this checker\'s level that are still within their deadline','Tap into a request to review it before deciding'],
+ mermaid:`flowchart LR
+  Q["All pending requests"] --> F{"Matches this checker's level\\nand is it their turn yet?"}
+  F -->|"yes"| I["Shows up in their inbox"]
+  F -->|"not their turn yet"| N["Not shown"]`},
+
+{g:'business', title:'Request detail + signature history', badge:'Checker',
+ desc:'Before signing, a checker sees everything: the amount, who created the request (the maker), the reason, and a list of everyone who already signed, with timestamps — so they know exactly what they\'re signing, not signing blind.',
+ steps:['Open a request from the inbox','See the amount, the maker, and the reason for the payout','See the "Signatures" section: who signed at which level, and when'],
+ mermaid:`flowchart TB
+  D["Request detail"] --> M["Amount · Maker · Reason"]
+  D --> S["List of signatures so far"]
+  S --> S1["Level 1 — Alex Chen — 09:26"]`},
+
+{g:'business', title:'Approve / reject with OTP', badge:'Checker',
+ desc:'Approving or rejecting a request requires entering an OTP sent specifically to that checker — turning the signature into an act they cannot later deny (it was truly that checker who agreed, not someone tapping on their behalf).',
+ steps:['Tap "Approve" or "Reject"','The system sends an OTP to the checker\'s phone','Enter the correct OTP to confirm the signature','If it\'s the last signature needed: money moves right away; otherwise the request waits for the next checker'],
+ mermaid:`sequenceDiagram
+  actor C as Checker
+  participant BE as Backend
+  C->>BE: Taps Approve / Reject
+  BE-->>C: Sends an OTP
+  C->>BE: Enters OTP to confirm
+  alt fully signed per policy
+    BE->>BE: Executes the transfer right away
+  else still missing a signature
+    BE->>BE: Hands off to the next checker level
+  end`},
+
+{g:'business', title:'Result after signing', badge:'Checker',
+ desc:'After signing, a checker immediately sees a clear result: if it was the final signature → "Approved, transfer in progress"; if more are needed → "recorded, still waiting on N more people". A rare edge case: two checkers tap approve almost simultaneously — whoever arrives second sees a clear "this order was just handled by someone else" screen instead of a confusing error.',
+ steps:['Right after signing, see the outcome on screen','If it was the final signature: see "transfer in progress"','If not fully signed yet: see "still waiting on N more people"','If someone else signed a few seconds before you: a clear screen explains it, not a raw error'],
+ mermaid:`flowchart LR
+  K["Just finished signing"] --> R{"Result from the server"}
+  R -->|"fully signed"| A["✅ Approved — transfer in progress"]
+  R -->|"still missing signatures"| B["🕒 Still waiting on N more people"]
+  R -->|"someone else signed first"| C["🤝 This order was already handled"]`},
+
+{g:'admin', title:'Operations dashboard', badge:'Ops',
+ desc:'The operations team\'s home page: the day\'s key metrics (transaction count, pending KYC reviews, fraud alerts...) plus a "needs attention" area so urgent items don\'t get missed.',
+ steps:['Open the admin site','Review today\'s KPI metrics','Check the "needs attention" area to see what\'s a priority'],
+ mermaid:`flowchart LR
+  D["Dashboard"] --> K["Today's KPI metrics"]
+  D --> A["Needs-attention area"]
+  A --> L["Quick links to the relevant queue"]`},
+
+{g:'admin', title:'KYC review queue', badge:'Ops',
+ desc:'A list of identity documents that scored in the not-confident-enough-to-auto-approve range — a staff member reviews the ID photo, the selfie, and the AI\'s explanation, then decides to approve or reject. Keyboard shortcuts speed up bulk review.',
+ steps:['Open the KYC queue','Review the document photo, selfie, AI score, and AI reasoning','Decide to approve or reject (keyboard shortcuts available)'],
+ mermaid:`flowchart LR
+  Q["KYC queue"] --> V["Review photos + AI score + reasoning"]
+  V --> D{"Decision"}
+  D -->|"approve"| OK["User's limit is raised"]
+  D -->|"reject"| NO["User is notified and can resubmit"]`},
+
+{g:'admin', title:'Fraud monitoring', badge:'Ops',
+ desc:'A list of transactions the system flagged as potentially fraudulent (rapid consecutive transfers, unusual amount spikes, an unfamiliar device...), each with a plain-language explanation generated by AI so staff can understand the flag quickly, with an SLA to resolve it.',
+ steps:['Open the fraud alerts list','Review why it was flagged (hard rules + the AI\'s explanation)','Resolve it: confirm it as fraud or dismiss the alert'],
+ mermaid:`flowchart LR
+  T["Transaction"] --> R["Hard rules: velocity, amount, unfamiliar device..."]
+  R -->|"grey area"| AI["AI adds a plain-language explanation"]
+  AI --> Q["Goes into the staff review queue"]
+  Q --> H["Staff: confirm fraud / dismiss"]`},
+
+{g:'admin', title:'Workflow monitor', badge:'Ops',
+ desc:'Every transaction runs through several processing steps behind the scenes; this screen shows operations which ones are "stuck" or failed mid-way, filterable by status or transaction type, so staff can step in instead of leaving a customer waiting indefinitely.',
+ steps:['Open the workflow monitor','Filter by status (running / failed / stuck too long) or transaction type','Drill into one stuck instance to see exactly which step it stopped at'],
+ mermaid:`flowchart LR
+  M["Workflow monitor"] --> F["Filter: status · type · stuck >5 min"]
+  F --> D["View one instance's detail"]
+  D --> S["Which step it's stuck at, and why"]`},
+
+{g:'admin', title:'Daily reconciliation', badge:'Ops',
+ desc:'Every night, the system automatically matches internal transactions against a (simulated) bank statement — which ones match, which ones are off, which ones are missing on either side. AI summarizes the reasons for mismatches in plain language, and the report can be exported to Excel.',
+ steps:['Run reconciliation (automatic at 00:15, or on demand)','Review the list: matched / mismatched / missing','Read the AI-written summary of why things are off','Export an Excel report if needed'],
+ mermaid:`flowchart LR
+  C["00:15 cron job"] --> M["Match by reference code\\nagainst the bank statement"]
+  M --> R["Matched / Mismatched / Missing"]
+  R --> AI["AI summarizes the causes"]
+  R --> X["Export to Excel"]`},
+
+{g:'admin', title:"Admin's My Tasks", badge:'Ops',
+ desc:'Dual-control approval isn\'t just for business payouts — the operations team\'s own sensitive actions (refunding a transaction, locking a user\'s account, changing a fee policy) also require sign-off from a different admin, using the exact same maker-checker mechanism.',
+ steps:['Admin A proposes a sensitive action (e.g. a refund)','It lands in a different admin\'s "My Tasks" queue','Admin B reviews the reason and approves or rejects it','Once approved, the action is actually carried out'],
+ mermaid:`flowchart LR
+  A1["Admin A proposes\\n(refund / account lock / policy change)"] --> Q["My Tasks"]
+  Q --> A2["Admin B reviews it"]
+  A2 -->|"approves"| DO["Action is carried out"]
+  A2 -->|"rejects"| STOP["Stopped, with a reason"]`},
+
+{g:'admin', title:'Audit log search', badge:'Ops',
+ desc:'Every important action (who approved what, who changed which policy, and when) is recorded permanently and can never be edited. This screen lets staff search by keyword when they need to look something up.',
+ steps:['Open the audit log screen','Type a search keyword (e.g. a person\'s name, an action type)','Review results with the time, actor, and reason'],
+ mermaid:`flowchart LR
+  E["Every sensitive action"] --> LOG["Written to audit_logs (immutable)"]
+  U["Staff member"] -->|"searches by keyword"| LOG
+  LOG --> R["Results: who · what · when · why"]`},
+
+{g:'admin', title:'Organization &amp; policy management', badge:'Ops',
+ desc:'Operations staff can view every active business organization on the platform and each one\'s current approval policy, to help when a business customer needs support.',
+ steps:['Open the organization list','View a given org\'s members, roles, and current policy','Assist with adjustments when a customer asks'],
+ mermaid:`flowchart LR
+  L["Organization list"] --> O["Pick one organization"]
+  O --> M["Members + roles"]
+  O --> P["Current approval policy"]`},
+
+{g:'platform', title:'Automated fraud detection', badge:'Platform',
+ desc:'Runs in the background on every transaction. Clear, deterministic rules (rapid consecutive transfers, sudden amount spikes, an unfamiliar device, an unusual hour) are checked first; only when a case falls into a "grey area" is AI asked for an explanation — and AI never gets to block money on its own. The final call is always a hard rule or a human.',
+ steps:['Every transaction passes through a fraud check','Hard rules score the risk first','A score in the uncertain range → AI is asked to add an explanation','The block/allow decision is always made by a hard rule or a human, never by AI'],
+ mermaid:`flowchart LR
+  T["Transaction"] --> R["Hard rules: velocity / amount / device"]
+  R -->|"clearly safe"| OK["Allowed through"]
+  R -->|"grey area"| AI["AI adds an explanation"]
+  R -->|"clearly dangerous"| BLOCK["Blocked immediately"]
+  AI --> H["A human reviewer makes the final call"]`},
+
+{g:'platform', title:'Safe to retry (idempotency)', badge:'Platform',
+ desc:'Every action that moves money (topping up, transferring, creating a payout...) carries a unique "request key". If a user retries the exact same request because of a network hiccup, the system recognizes it as the same request and returns the original result — it never debits or credits twice.',
+ steps:['The app attaches one unique random key to each transfer request','The request is sent to the server','If the same key is sent again: the server returns the original transaction\'s result instead of creating a new one'],
+ mermaid:`flowchart LR
+  A["Request #1 (key X)"] --> S["Server processes it, creates a transaction"]
+  B["Request #2 (same key X, due to a dropped connection)"] --> C{"Has key X already been processed?"}
+  C -->|"yes"| R["Return the original result, create NOTHING new"]`},
+
+{g:'platform', title:'Self-healing on failure', badge:'Platform',
+ desc:'If a transaction is mid-processing and the server handling that step fails partway through, a periodic job automatically finds "forgotten" transactions and resumes processing right from the step they were stuck on — nothing is left hanging forever, and nothing gets processed twice.',
+ steps:['A transaction stalls mid-way due to a failure (network loss, server restart...)','A periodic sweep (every few minutes) finds transactions stuck too long','The transaction is retried exactly from the step it was on, not repeating steps already done','If it still fails after several retries: the transaction is closed out cleanly as failed, with a refund if needed'],
+ mermaid:`flowchart LR
+  X["Transaction stuck mid-way"] --> S["Periodic sweeper job"]
+  S --> C["Identifies transactions stuck too long"]
+  C --> RT["Retries exactly from the step it was on"]
+  RT -->|"succeeds"| DONE["Completed"]
+  RT -->|"still fails, retries exhausted"| FAIL["Closed out as failed + refunded if needed"]`},
+];
+
+document.documentElement.dataset.theme = document.documentElement.dataset.theme || '';
+
+function initTheme(){
+  try{
+    const saved = localStorage.getItem('hpay-guide-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+}
+initTheme();
+
+function renderNav(){
+  const nav = document.getElementById('rolenav');
+  nav.innerHTML = GROUPS.map(g=>`<a href="#${g.id}">${g.title.replace(/^[^ ]+ /,'')}</a>`).join('');
+}
+
+function renderSections(){
+  const root = document.getElementById('sections');
+  root.innerHTML = GROUPS.map(g=>{
+    const items = FEATURES.filter(f=>f.g===g.id);
+    const cards = items.map((f,i)=>`
+      <button class="card" data-idx="${FEATURES.indexOf(f)}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span class="badge">${f.badge}</span>
+        <span class="title">${f.title}</span>
+        <span class="sub">${f.desc.slice(0,100).replace(/<[^>]+>/g,'')}…</span>
+      </button>`).join('');
+    return `<section class="role ${g.cls}" id="${g.id}">
+      <div class="role-head"><h2>${g.title}</h2><span class="role-tag">${g.tag}</span></div>
+      <p class="role-desc">${g.desc}</p>
+      <div class="cards">${cards}</div>
+    </section>`;
+  }).join('');
+
+  root.querySelectorAll('.card').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.idx,10)));
+  });
+}
+
+const diagramCache = {};
+async function openModal(idx){
+  const f = FEATURES[idx];
+  const overlay = document.getElementById('overlay');
+  document.getElementById('m-badge').textContent = f.badge;
+  document.getElementById('m-badge').style.background = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).background;
+  document.getElementById('m-badge').style.color = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).color;
+  document.getElementById('m-title').innerHTML = f.title;
+  document.getElementById('m-desc').innerHTML = f.desc;
+  document.getElementById('m-steps').innerHTML = f.steps.map((s,i)=>`<li><span class="dot">${i+1}</span><span class="txt">${s}</span></li>`).join('');
+  const dbox = document.getElementById('m-diagram');
+  dbox.innerHTML = '<span class="loading">Rendering diagram…</span>';
+  overlay.classList.add('open');
+
+  if(diagramCache[idx]){
+    dbox.innerHTML = diagramCache[idx];
+  } else {
+    try{
+      const themeAttr = document.documentElement.getAttribute('data-theme');
+      const isDark = themeAttr ? themeAttr === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      mermaid.initialize({startOnLoad:false, theme: isDark ? 'dark' : 'neutral', flowchart:{curve:'basis'}, themeVariables:{fontSize:'13px'}});
+      const {svg} = await mermaid.render('dg-'+idx+'-'+Date.now(), f.mermaid);
+      diagramCache[idx] = svg;
+      dbox.innerHTML = svg;
+    }catch(e){
+      dbox.innerHTML = '<span class="loading">Could not render this diagram.</span>';
+    }
+  }
+}
+
+document.getElementById('m-close').addEventListener('click', ()=>{
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') document.getElementById('overlay').classList.remove('open');
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') document.getElementById('overlay').classList.remove('open');
+});
+
+renderNav();
+renderSections();
+</script>
+</body>
+</html>

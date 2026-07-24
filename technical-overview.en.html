@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HPay — Technical Architecture &amp; Concepts</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --paper:#F4F5F2; --surface:#FFFFFF; --surface-2:#FBFBF9;
+  --ink:#151A17; --ink-2:#4B534D; --ink-3:#7C837D;
+  --line:#DFE1DB; --line-soft:#ECEDE9;
+  --money:#0F5C4E; --money-ink:#0A3E34; --money-tint:#E4F1EC;
+  --engine:#9A4A22; --engine-ink:#6E3417; --engine-tint:#F7EBE1;
+  --security:#33527D; --security-ink:#23395A; --security-tint:#E7ECF4;
+  --ai:#5C4A8C; --ai-ink:#3E3161; --ai-tint:#EEEBF7;
+  --craft:#7A5E10; --craft-ink:#59440B; --craft-tint:#F5EFDD;
+  --ok:#1D7A4C; --warn:#A66A0E; --bad:#B23A3A;
+  --font-head:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,'Cascadia Code',Consolas,monospace;
+  --radius:10px;
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+  --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+  --line:#31363B; --line-soft:#282C31;
+  --money:#4FC9A8; --money-ink:#8FE0C7; --money-tint:#173029;
+  --engine:#E1935E; --engine-ink:#F0BE95; --engine-tint:#33241A;
+  --security:#8FADDA; --security-ink:#BBCFEF; --security-tint:#1D2A3E;
+  --ai:#B6A6E8; --ai-ink:#D2C6F4; --ai-tint:#251F3A;
+  --craft:#E0C060; --craft-ink:#F0DB9E; --craft-tint:#332A0F;
+  --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+    --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+    --line:#31363B; --line-soft:#282C31;
+    --money:#4FC9A8; --money-ink:#8FE0C7; --money-tint:#173029;
+    --engine:#E1935E; --engine-ink:#F0BE95; --engine-tint:#33241A;
+    --security:#8FADDA; --security-ink:#BBCFEF; --security-tint:#1D2A3E;
+    --ai:#B6A6E8; --ai-ink:#D2C6F4; --ai-tint:#251F3A;
+    --craft:#E0C060; --craft-ink:#F0DB9E; --craft-tint:#332A0F;
+    --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;font-size:15.5px}
+.wrap{max-width:1120px;margin:0 auto;padding:36px 24px 120px}
+a{color:var(--money)}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;text-wrap:balance;color:var(--ink);margin:0}
+
+header.top{display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+header.top h1{font-size:34px;letter-spacing:-.01em}
+header.top .lede{max-width:720px;color:var(--ink-2);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+.langbar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-3)}
+.langbar a{font-weight:600;text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
+.langbar a.current{background:var(--money);color:#fff;border-color:var(--money)}
+
+nav.rolenav{position:sticky;top:0;background:var(--paper);z-index:20;padding:14px 0;margin:0 0 28px;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+nav.rolenav a{text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+nav.rolenav a:hover{border-color:var(--ink-3)}
+
+section.role{margin:56px 0}
+.role-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.role-head h2{font-size:24px}
+.role-tag{font-size:11.5px;font-weight:700;letter-spacing:.03em;padding:3px 10px;border-radius:99px}
+.role-desc{color:var(--ink-2);max-width:760px;margin:8px 0 22px;font-size:15px}
+
+.g-money .role-tag{background:var(--money-tint);color:var(--money-ink)}
+.g-engine .role-tag{background:var(--engine-tint);color:var(--engine-ink)}
+.g-security .role-tag{background:var(--security-tint);color:var(--security-ink)}
+.g-ai .role-tag{background:var(--ai-tint);color:var(--ai-ink)}
+.g-craft .role-tag{background:var(--craft-tint);color:var(--craft-ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{
+  text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;cursor:pointer;font-family:var(--font-body);color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;transition:border-color .12s ease,transform .12s ease;
+}
+.card:hover{border-color:var(--ink-3)}
+.card:active{transform:scale(0.99)}
+.card .num{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+.card .title{font-weight:600;font-size:15px;line-height:1.35}
+.card .sub{font-size:13px;color:var(--ink-2);line-height:1.45}
+.card .badge{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;margin-top:2px}
+.g-money .card .badge{background:var(--money-tint);color:var(--money-ink)}
+.g-engine .card .badge{background:var(--engine-tint);color:var(--engine-ink)}
+.g-security .card .badge{background:var(--security-tint);color:var(--security-ink)}
+.g-ai .card .badge{background:var(--ai-tint);color:var(--ai-ink)}
+.g-craft .card .badge{background:var(--craft-tint);color:var(--craft-ink)}
+
+.overlay{position:fixed;inset:0;background:rgba(10,12,10,.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;max-width:780px;width:100%;padding:0;box-shadow:0 24px 64px rgba(0,0,0,.28);margin-bottom:5vh}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:24px 26px 16px;border-bottom:1px solid var(--line-soft)}
+.modal-head .badge{font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.modal-head h3{font-size:21px;line-height:1.3}
+.modal-close{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;flex:none}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:20px 26px 26px;display:flex;flex-direction:column;gap:20px}
+.modal-body .desc{color:var(--ink-2);font-size:14.5px}
+.modal-body .impl{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-2)}
+.modal-body .impl b{color:var(--ink)}
+.modal-body .impl code{font-family:var(--font-mono);font-size:12px;background:var(--surface);border:1px solid var(--line-soft);padding:1px 5px;border-radius:4px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:12px;font-size:13.5px}
+.steps li .dot{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-2)}
+.steps li .txt{padding-top:2px;color:var(--ink)}
+.steps li .txt code{font-family:var(--font-mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.diagram-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;margin-bottom:8px}
+.diagram-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram-box svg{max-width:100%;height:auto}
+.diagram-box .loading{font-size:13px;color:var(--ink-3);font-style:italic}
+
+footer{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:640px){header.top h1{font-size:27px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="langbar">
+    <span>🌐</span>
+    <a href="technical-overview.vi.html">Tiếng Việt</a>
+    <a href="technical-overview.en.html" class="current">English</a>
+    <span style="margin-left:auto"></span>
+    <a href="functional-overview.en.html">← See the functional guide</a>
+  </div>
+  <div class="eyebrow">Technical document · for understanding code that was written on your behalf</div>
+  <h1>HPay — architecture &amp; the technical concepts behind it</h1>
+  <p class="lede">This document explains the <b>underlying technical concepts</b> behind every feature in the functional guide (ACID, saga-style workflow engines, auth &amp; security, AI, how the code is organized...) — written for someone new to these ideas, so you can judge for yourself what's missing or risky before moving forward with more development.</p>
+  <div class="chips">
+    <span class="chip">Go · Gin · sqlc · PostgreSQL 16</span>
+    <span class="chip">Redis 7 (Streams + cron)</span>
+    <span class="chip">Claude API (with a mock fallback)</span>
+    <span class="chip">React / React Native</span>
+  </div>
+</header>
+
+<nav class="rolenav" id="rolenav"></nav>
+
+<div id="sections"></div>
+
+<footer>
+  <span>HPay · technical guide · click any concept for an explanation + diagram</span>
+  <span>Functional guide (product overview) → <a href="functional-overview.en.html">functional-overview.en.html</a></span>
+</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <span class="badge" id="m-badge"></span>
+        <h3 id="m-title"></h3>
+      </div>
+      <button class="modal-close" id="m-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="desc" id="m-desc"></p>
+      <div class="impl" id="m-impl"></div>
+      <div>
+        <div class="diagram-label">How it works</div>
+        <ol class="steps" id="m-steps"></ol>
+      </div>
+      <div>
+        <div class="diagram-label">Diagram</div>
+        <div class="diagram-box" id="m-diagram"><span class="loading">Rendering diagram…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  {id:'money', cls:'g-money', tag:'MONEY & ACID', title:'💰 Money &amp; correctness (ACID)',
+   desc:'The set of concepts that guarantee <b>money never spontaneously appears, disappears, or gets miscounted</b> — the foundation of any financial system, and more important than any other feature.'},
+  {id:'engine', cls:'g-engine', tag:'WORKFLOW & APPROVAL', title:'⚙️ Business workflow processing &amp; dual-control authorization',
+   desc:'How a transaction moves reliably through several processing steps (even through network failures and mid-step server crashes), and how the system enforces a "second person" sign-off for sensitive actions.'},
+  {id:'security', cls:'g-security', tag:'SECURITY', title:'🔐 Authentication &amp; security',
+   desc:'How the system verifies "you are who you say you are," and how it limits the blast radius if credentials ever leak.'},
+  {id:'ai', cls:'g-ai', tag:'AI', title:'🤖 AI in the system',
+   desc:'Where AI is actually used (not marketing) — and the single most important rule: AI never gets to make a final decision about money.'},
+  {id:'craft', cls:'g-craft', tag:'ENGINEERING PRACTICE', title:'🛠️ Engineering foundations',
+   desc:'How the code is organized, verified, and shipped to reduce the risk of bugs — tooling choices you don\'t see on screen but that shape long-term quality.'},
+];
+
+const FEATURES = [
+{g:'money', title:'Double-entry ledger', badge:'Ledger',
+ desc:'A centuries-old accounting concept: a money movement is never "one balance that changes" — it\'s at least <b>two entries</b>, a debit (where money left) and a credit (where it arrived), and the two sides always sum to zero. Because of this, a wallet balance is never a single fragile number that can drift out of sync — it can always be recomputed from the full entry history and reconciled.',
+ impl:'<b>In HPay:</b> <code>internal/ledger</code> — the <code>ledger_entries</code> table (direction: debit/credit). <code>wallets.balance</code> must always equal <code>SUM(ledger_entries)</code> for that wallet; an internal reconciliation job checks this every day.',
+ steps:['One P2P transfer produces ≥2 entries: a debit on the sender\'s wallet, a credit on the recipient\'s','Both entries are written inside the same database transaction — either both succeed or neither is written','A wallet\'s balance is the sum of all its entries — never a loose, independently-stored number','An internal reconciliation job runs periodically to catch drift early'],
+ mermaid:`flowchart LR
+  T["1 transfer of $100"] --> D["Debit entry: wallet A -100"]
+  T --> C["Credit entry: wallet B +100"]
+  D & C -->|"same DB transaction"| OK["Both written, or neither"]
+  OK --> BAL["Wallet balance = SUM(entries)"]`},
+
+{g:'money', title:'Atomicity via database transactions', badge:'ACID',
+ desc:'The "A" in ACID = Atomicity: a group of database operations must happen <b>entirely or not at all</b> — no half-finished state. If something fails part-way through, the whole group is rolled back as if it never happened.',
+ impl:'<b>In HPay:</b> every ledger write, transaction creation, and workflow status update is wrapped in a single Postgres transaction (<code>tx.Begin()</code> ... <code>tx.Commit()</code>/<code>Rollback()</code>).',
+ steps:['Start a database transaction','Perform several writes (e.g. write 2 ledger entries + update transaction status)','If everything succeeds: commit — all changes take effect at once','If any step fails: roll back — every change in the group is discarded, the database is as if nothing changed'],
+ mermaid:`flowchart TB
+  B["BEGIN transaction"] --> S1["Write debit entry"]
+  S1 --> S2["Write credit entry"]
+  S2 --> S3["Update transaction status"]
+  S3 -->|"all OK"| CM["COMMIT — takes effect atomically"]
+  S1 -.->|"failure anywhere"| RB["ROLLBACK — discard everything, as if it never happened"]
+  S2 -.-> RB
+  S3 -.-> RB`},
+
+{g:'money', title:'Lock ordering — avoiding deadlocks', badge:'Concurrency',
+ desc:'When two transactions touch the same two wallets at the same time but in opposite order (transaction 1 locks wallet A then waits for B; transaction 2 locks wallet B then waits for A), both wait on each other forever — a <b>deadlock</b>. The classic fix: always lock wallets in one fixed order (e.g. ascending ID), regardless of who\'s the sender or receiver.',
+ impl:'<b>In HPay:</b> before debiting/crediting, the wallets involved are locked with <code>SELECT ... FOR UPDATE</code> in ascending <code>wallet_id</code> order, never in "sender first" order.',
+ steps:['A transaction needs to lock wallet A and wallet B to update balances','Sort the two wallets by ID, always lock the lower-ID wallet first','Lock the second wallet after','Because EVERY transaction follows this same rule, two transactions can never wait on each other in a cycle'],
+ mermaid:`flowchart LR
+  T1["Transaction: A→B"] -->|"always locks in ascending ID order"| L1["Lock the lower-ID wallet first"]
+  T2["Transaction: B→A"] -->|"follows the exact same rule"| L1
+  L1 --> L2["Lock the higher-ID wallet after"]
+  L2 --> OK["Never a circular wait (deadlock)"]`},
+
+{g:'money', title:'Idempotency keys — never double-charge', badge:'Reliability',
+ desc:'When the network is flaky, a client can\'t be sure whether a request actually reached the server, so it tends to retry. If the server treats every retry as a brand-new request, money can get debited or credited twice. The fix: the client attaches one unique random key per <i>intent</i> to transact (not per HTTP call), and the server enforces a unique constraint on that key so it\'s processed exactly once — retries just get back the original result.',
+ impl:'<b>In HPay:</b> the <code>Idempotency-Key</code> header is required on every money-creating endpoint; middleware checks a Postgres unique constraint before proceeding.',
+ steps:['The client generates one unique random key when the user taps "Send"','It sends the request with that key in the header','Server: if the key already exists in the DB → return the original transaction\'s result, don\'t reprocess','If the key is new → process normally, and store the key for future recognition'],
+ mermaid:`flowchart LR
+  R1["Request #1 (key=X)"] --> DB{"Does key X already exist?"}
+  DB -->|"no"| P["Process the transaction, store key X"]
+  R2["Request #2 (retried due to lag, key=X)"] --> DB
+  DB -->|"yes"| RET["Return the original result"]`},
+
+{g:'money', title:'Immutable ledger (append-only)', badge:'Ledger',
+ desc:'A posted ledger entry is never UPDATEd or DELETEd — not even to fix a mistake. To "correct" something, the system posts a new, reversing entry instead (a refund is a new transaction that points back at the original). This preserves the full, true history for auditing and investigation later.',
+ impl:'<b>In HPay:</b> the <code>ledger_entries</code> table is only ever INSERTed into anywhere in the codebase; a reversal creates a new entry with a <code>reversal_of</code> column pointing back at the original transaction.',
+ steps:['A transaction is identified as needing a refund','The original entry is NOT edited or deleted','A new, opposite-direction entry is created, with a reversal_of link back to the original','The full history remains intact — the ledger shows both the original and the reversal'],
+ mermaid:`flowchart LR
+  O["Original transfer: A→B $100"] --> L["Original entries (never edited)"]
+  X["Needs a refund"] --> N["NEW entries: B→A $100\\n(reversal_of = original)"]
+  L --> H["Full history preserved: both transactions visible"]
+  N --> H`},
+
+{g:'engine', title:'Workflow engine = a configurable state machine', badge:'Engine',
+ desc:'Instead of hard-coding "a transfer does A, then B, then C" in application code, each transaction type is a <b>workflow definition</b> stored as versioned data (JSON) — a list of steps and each step\'s type (automatic, or waiting on a human). Adding a new transaction type means adding a definition, not touching processing code.',
+ impl:'<b>In HPay:</b> <code>internal/workflow</code>, the <code>workflow_definitions</code> table (JSONB, versioned) + <code>workflow_instances</code> (one running transaction = one instance) + <code>step_executions</code> (a log of every step run).',
+ steps:['A new transaction → a new "instance" starts, following that transaction type\'s definition','Steps run in sequence: automatic steps (validate, debit funds...) or steps that pause for human approval','Every step run is logged individually (step_executions) — useful for later investigation','Adding a new transaction type = adding one new definition row, without touching live code'],
+ mermaid:`flowchart LR
+  DEF[("workflow_definitions\\n(JSON, versioned)")] --> INST["1 transaction → 1 instance"]
+  INST --> S1["Step 1: automatic"]
+  S1 --> S2["Step 2: automatic"]
+  S2 --> S3{"Step 3: needs human approval?"}
+  S3 -->|"yes"| WAIT["Pauses, waits for a signature"]
+  S3 -->|"no"| S4["Next step"]`},
+
+{g:'engine', title:'Transactional outbox — never lose or duplicate an event', badge:'Pattern',
+ desc:'A classic problem: writing to a database and publishing an event to a queue (Redis, Kafka...) as two separate operations means one can succeed while the other fails — leaving the data and the event out of sync. The "outbox" fix: write the event into the <b>same database transaction</b> as the data change (into a temporary "outbox" table), and let a separate process read that table and actually publish it.',
+ impl:'<b>In HPay:</b> the <code>outbox</code> table is written inside the same transaction as every workflow status change; an "outbox relay" periodically reads it and pushes events into Redis Streams.',
+ steps:['Change the workflow status + insert one row into the outbox table — SAME transaction','The transaction commits: both are guaranteed to take effect together, or neither does','An outbox relay process periodically reads unpublished outbox rows','It pushes the event onto Redis Streams and marks the row as sent'],
+ mermaid:`flowchart LR
+  TX["1 DB transaction"] --> D["Change workflow status"]
+  TX --> O["Insert 1 row into the outbox table"]
+  D & O -->|"commit together"| C["Guaranteed to stay in sync"]
+  C --> R["Outbox relay reads periodically"]
+  R --> RS["Pushes onto Redis Streams"]`},
+
+{g:'engine', title:'Redis Streams consumer groups', badge:'Messaging',
+ desc:'Unlike plain Pub/Sub (an event is broadcast, and anyone not listening at that moment loses it forever), Redis Streams keeps events around and tracks exactly how far each "consumer group" has read. If a worker picks up an event but crashes before acknowledging it (XACK), the event is still there for another worker to pick up — nothing is lost.',
+ impl:'<b>In HPay:</b> each processing step type (validator, fraud check, wallet, confirmer...) is its own consumer group on Redis Streams, acknowledged with XACK once processing is done.',
+ steps:['An event is pushed onto a Stream (it doesn\'t disappear after being sent)','A worker in a consumer group reads the event and starts processing','If the worker crashes mid-way: the event was never XACKed, so it\'s still "pending" in the stream','Another worker (or the same one after restarting) picks up that exact event to finish it'],
+ mermaid:`flowchart LR
+  E["Event"] --> ST[("Redis Stream\\n(retained, not lost)")]
+  ST --> W1["A worker picks it up, processes it"]
+  W1 -.->|"crashes before XACK"| ST
+  ST --> W2["Another worker picks up the same event"]
+  W2 -->|"finishes processing"| ACK["XACK — marks it done"]`},
+
+{g:'engine', title:'Saga compensation — undoing a mid-way failure', badge:'Pattern',
+ desc:'A transaction runs through several steps — if step 3 fails after step 1 and 2 already succeeded (e.g. the sender\'s money was already debited), the system can\'t simply "rewind" because each step is its own already-committed transaction. The saga fix: run "compensating" steps that undo the effect of completed steps, in reverse order.',
+ impl:'<b>In HPay:</b> every step handler has both a main function and a compensate function (idempotent); when a step fails and can\'t be retried, the engine runs compensation for prior steps in reverse order.',
+ steps:['Step 1 (debit the sender): succeeds','Step 2 (fraud check): succeeds','Step 3 (credit the recipient): fails, retries exhausted','The engine runs compensation for step 1: refund the sender via a reversing entry (the original entry is never deleted)'],
+ mermaid:`flowchart LR
+  S1["Step 1: debit ✅"] --> S2["Step 2: fraud check ✅"]
+  S2 --> S3["Step 3: credit ❌ (retries exhausted)"]
+  S3 --> COMP["Runs compensation in reverse order"]
+  COMP --> C1["Compensate step 1: refund the sender"]`},
+
+{g:'engine', title:'Recovery sweeper (claim-lease)', badge:'Reliability',
+ desc:'A periodic job scans for transactions stuck too long (the server handling that step crashed before reporting a result). To keep two sweepers running in parallel from grabbing the same stuck transaction and double-processing it, each transaction is "claimed" with a single conditional UPDATE — only one sweeper wins, and the transaction is marked "someone owns this" (a lease) before it\'s actually retried.',
+ impl:'<b>In HPay:</b> a job runs every 5 minutes looking for instances stuck in running/compensating past a threshold, claiming with an <code>UPDATE ... WHERE status=... RETURNING</code> (only one caller wins, thanks to the condition).',
+ steps:['The sweeper scans for "running" instances stuck too long (e.g. >10 minutes with no update)','It attempts to claim one via a conditional UPDATE — succeeding only if no one else has claimed it yet','If the claim succeeds: it retries exactly the step that was in progress (the handler must be idempotent)','If retries still fail repeatedly: the transaction is closed out as failed and compensation runs'],
+ mermaid:`flowchart LR
+  SW1["Sweeper #1"] -->|"UPDATE ... WHERE not yet claimed"| DB[("A stuck instance")]
+  SW2["Sweeper #2 (running in parallel)"] -->|"also tries to claim it"| DB
+  DB -->|"only one wins"| WIN["Winning sweeper: retries the stuck step"]
+  DB -->|"the loser"| LOSE["Does nothing, moves on"]`},
+
+{g:'engine', title:'Maker-checker / approval engine', badge:'Authorization',
+ desc:'The "separation of duties" principle: the person who proposes a sensitive action must not be the same person who approves it — at least one other person must agree. HPay built this engine to be <b>generic</b>, shared by both business payout requests and sensitive admin actions (refunds, account locks, policy changes) — not a separate, hand-rolled flow for each.',
+ impl:'<b>In HPay:</b> <code>internal/approval</code> — the <code>approval_requests</code> table has a <code>subject_type</code> column (org_txn / reversal / account_lock / policy_change) sharing one state machine; each signature requires its own OTP.',
+ steps:['The proposer creates an approval_request, freezing ("snapshotting") the policy in effect at that moment','An approver reviews the request and enters their own OTP to confirm the signature','Once enough signatures match the snapshotted policy → the engine executes the real action (transfer / refund / account lock...)','Everything is written to an immutable audit log'],
+ mermaid:`flowchart LR
+  P["Proposer"] --> R["approval_request\\n+ policy snapshot"]
+  R --> C1["Approver #1: signs with OTP"]
+  C1 --> C2{"Enough signatures?"}
+  C2 -->|"yes"| EX["Executes the real action"]
+  C2 -->|"no"| C3["Approver #2: signs with OTP"]
+  C3 --> C2`},
+
+{g:'security', title:'JWT access/refresh rotation + theft detection', badge:'Auth',
+ desc:'The access token is short-lived (minutes to hours) to limit damage if it leaks; the refresh token lives longer but is <b>usable exactly once</b> — every time the app asks for a new access token, the old refresh token is "burned" and a new one is issued (rotation). If the server ever sees an already-used refresh token get used again, that\'s a near-certain sign of theft — the entire token "family" across every device is revoked immediately.',
+ impl:'<b>In HPay:</b> <code>internal/auth</code> — every refresh token belongs to a <code>family_id</code>; reusing a token already marked <code>used_at</code> revokes the whole family and writes an audit log entry.',
+ steps:['Login: issues an access token (short-lived) + a refresh token (long-lived), tied to one "family"','When the app\'s access token expires, it sends the refresh token for a new pair','The server marks the old refresh token as "used" and issues a new pair in the same family','If an already-used refresh token is sent again → suspected theft → revoke the entire family, forcing re-login'],
+ mermaid:`sequenceDiagram
+  actor U as App
+  participant S as Server
+  U->>S: Log in
+  S-->>U: access token + refresh token (family F1)
+  U->>S: Refresh (using refresh F1)
+  S-->>U: new access + new refresh (still family F1, old refresh burned)
+  Note over U,S: An attacker replays the OLD, already-burned refresh token
+  U->>S: Refresh (reusing the old token)
+  S->>S: Detects reuse → revokes the ENTIRE family F1`},
+
+{g:'security', title:'argon2id password hashing', badge:'Auth',
+ desc:'Passwords are never stored in plaintext, and never hashed with a fast algorithm like MD5/SHA (trivially crackable with modern hardware/GPUs). argon2id is a "memory-hard" algorithm — deliberately expensive in both RAM and time to compute — which makes brute-forcing large numbers of passwords prohibitively expensive, even for an attacker with serious hardware.',
+ impl:'<b>In HPay:</b> <code>internal/auth/password.go</code>, using <code>golang.org/x/crypto/argon2</code>, stored as an encoded string with its parameters (memory, time, threads) and a per-password salt.',
+ steps:['A user sets a password','A random salt is generated, unique to this password','The password + salt is hashed with argon2id (deliberately RAM/time-expensive)','The hash + salt + parameters are stored — the original password is never stored'],
+ mermaid:`flowchart LR
+  P["User's password"] --> S["+ random salt"]
+  S --> H["argon2id (deliberately RAM/time-expensive)"]
+  H --> DB[("Stored: hash + salt + parameters")]
+  DB -.->|"never"| PLAIN["The original password"]`},
+
+{g:'security', title:'Device binding', badge:'Auth',
+ desc:'A login session is tied to a specific device (via a device ID the app generates itself) — helping detect and flag logins from an unfamiliar device, and limiting the damage if a token leaks (it\'s bound to one device, not freely usable anywhere).',
+ impl:'<b>In HPay:</b> the <code>X-Device-Id</code> header is sent with sensitive requests and recorded alongside the token/audit log for cross-referencing.',
+ steps:['The app generates a device ID the first time it\'s installed','That ID is sent with login/sensitive requests','The server records which device is tied to which session','A login from a never-seen device can trigger a warning or extra verification'],
+ mermaid:`flowchart LR
+  A["App's first install"] --> D["Generates a device ID"]
+  D --> L["Sent along with login"]
+  L --> S["Server ties the device to the session"]
+  S -.->|"unfamiliar device"| W["Can trigger a warning / extra verification"]`},
+
+{g:'security', title:'Rate limiting', badge:'Security',
+ desc:'Blocks a single person/IP from sending too many requests in a short window — both to stop brute-forcing passwords/OTPs and to protect the system from overload. Call counts are stored in Redis (fast, shared across every server) instead of each server\'s own local memory.',
+ impl:'<b>In HPay:</b> the <code>RateLimit</code>/<code>RateLimitUser</code> middleware wraps sensitive endpoints (login, requesting an OTP, user lookup...), counted against Redis with a time window.',
+ steps:['Every call to a sensitive endpoint increments a counter in Redis (by IP or by user)','If it exceeds the threshold within the configured window → the request is rejected with a clear error','The counter automatically expires after the window, allowing retries later'],
+ mermaid:`flowchart LR
+  R["Request to a sensitive endpoint"] --> C["Increments a Redis counter"]
+  C --> L{"Over the threshold?"}
+  L -->|"no"| OK["Allowed through"]
+  L -->|"yes"| BLOCK["429 — rejected, retry later"]`},
+
+{g:'ai', title:'KYC vision scoring', badge:'AI · KYC',
+ desc:'AI reads a photo of an ID document plus a selfie and returns a trust score with a plain-language reason — instead of a human having to eyeball every submission for an initial read. AI only ever produces a <b>scored suggestion</b>; which score threshold auto-approves and which requires human review is decided by the system\'s hard rules.',
+ impl:'<b>In HPay:</b> <code>internal/kyc</code> calls the Claude vision API; when no API key is configured (dev/CI), it automatically falls back to a deterministic mock so tests don\'t depend on the network.',
+ steps:['The user submits an ID photo + a selfie','The Claude vision API is called, returning {score, reasons}','A high score (e.g. ≥85): auto-approved','A borderline score (e.g. 50–85): goes to a review queue, where a human sees both the photos and the AI\'s reasoning','A low score: auto-rejected'],
+ mermaid:`flowchart LR
+  I["ID photo + selfie"] --> AI["Claude vision API\\n(mock if no API key)"]
+  AI --> SC["{score, reasons}"]
+  SC -->|"high score"| A["Auto-approved"]
+  SC -->|"borderline"| H["Human reviewer"]
+  SC -->|"low score"| R["Auto-rejected"]`},
+
+{g:'ai', title:'Fraud: hybrid hard rules + AI advisory', badge:'AI · Fraud',
+ desc:'The single most important rule: <b>AI never gets to block money on its own</b>. Clear, verifiable, deterministic rules (rapid consecutive transfers, an unusual amount, an unfamiliar device) always run first and are the ones authorized to decide clearly safe/clearly dangerous. Only cases that fall into a "grey area" — where the rules aren\'t confident enough — get sent to AI to generate an explanation that helps a human decide faster.',
+ impl:'<b>In HPay:</b> <code>internal/fraud</code> + <code>internal/ai</code> (the <code>Advisor</code> interface) — AI only returns explanatory text (<code>Complete()</code>); it has no ability to call a function that blocks a transaction.',
+ steps:['A transaction passes through hard rules: risk score based on velocity, amount, device...','A clearly-safe or clearly-dangerous score → the decision is made right away, WITHOUT calling AI','A score in the uncertain range → AI is called to generate a plain-language explanation','It\'s routed to a staff queue — a human (or a hard rule) always makes the final call'],
+ mermaid:`flowchart TB
+  T["Transaction"] --> RULE["Hard rules compute a risk score"]
+  RULE -->|"clear-cut"| DEC["Decided immediately — NO AI needed"]
+  RULE -->|"grey area"| AI["AI is called: generates an explanation only"]
+  AI --> Q["Queued for a human reviewer"]
+  Q --> DEC2["A human makes the final call"]`},
+
+{g:'ai', title:'AI-summarized reconciliation', badge:'AI · Recon',
+ desc:'After automatically matching internal records against a bank statement, the list of "mismatches" is often hard to read at a glance (many reference codes, odd amounts). AI reads through the mismatch list and writes a short, plain-language summary of the likely causes, so the reconciliation staff doesn\'t have to eyeball every row.',
+ impl:'<b>In HPay:</b> the reconciliation job (a 00:15 cron) reuses the same <code>ai.Advisor</code> interface as KYC/fraud — the same mock-fallback mechanism when there\'s no API key.',
+ steps:['The reconciliation job matches internal transactions against a (mock) statement by reference code','It produces a list: matched / mismatched / missing','The mismatch list is sent to AI, which writes a summary of likely causes','The summary is shown alongside a detailed table, exportable to Excel'],
+ mermaid:`flowchart LR
+  M["Match transactions ↔ statement"] --> R["List of mismatches"]
+  R --> AI["AI summarizes likely causes"]
+  R --> X["Export a detailed Excel report"]
+  AI --> UI["Shown to the reconciliation staff"]`},
+
+{g:'ai', title:'A 3-layer AI architecture + mock fallback', badge:'AI · Architecture',
+ desc:'AI is used at 3 genuinely different layers in HPay, which shouldn\'t be conflated: (1) <b>dev-time</b> — "skills" that help an AI assistant write code following the right conventions (module scaffolding, generating migrations, a fintech-review checklist); (2) <b>runtime</b> — KYC/fraud/recon as above; (3) <b>CI/CD</b> — automatic pull-request review against a checklist. All three layers fall back gracefully when no API key is present (a mock), so a missing key can never block development or testing.',
+ impl:'<b>In HPay:</b> <code>internal/ai.New(apiKey)</code> returns a <code>MockAdvisor</code> when the key is empty — the same logic is shared by all three runtime layers.',
+ steps:['Dev layer: Claude Code skills help scaffold modules, write migrations, and review against a fintech checklist','Runtime layer: KYC scoring, fraud explanations, recon summaries — all runnable in demos/CI without a real key','CI/CD layer: automatic pull-request review against a financial-security checklist','No API key at any layer → automatically falls back to a deterministic mock, never a hard error'],
+ mermaid:`flowchart TB
+  D["Dev layer\\nClaude Code skills"] --> COMMON["Same principle: mock fallback"]
+  R["Runtime layer\\nKYC · Fraud · Recon"] --> COMMON
+  C["CI/CD layer\\nautomatic PR review"] --> COMMON
+  COMMON -->|"API key present"| REAL["Calls the real AI"]
+  COMMON -->|"no key"| MOCK["Uses a deterministic mock, no error"]`},
+
+{g:'craft', title:'sqlc — SQL checked at compile time', badge:'Data layer',
+ desc:'Instead of an ORM (write Go code, the ORM generates SQL for you — easy, but hard to control the final query and prone to N+1 queries), sqlc goes the other way: write plain SQL first, and the tool reads it and <b>generates the matching Go code</b> (structs + call functions). If the SQL references the wrong column or type, the error shows up at build time, not after it reaches production.',
+ impl:'<b>In HPay:</b> <code>internal/store/queries/*.sql</code> → run <code>sqlc generate</code> → produces <code>internal/store/gen/*.go</code> (these generated files are never hand-edited).',
+ steps:['Write a plain SQL statement in a .sql file, naming the query','Run sqlc generate','The tool reads the real database schema plus the SQL and generates Go structs matching each column\'s exact type','If a column is later renamed in a migration but the SQL is forgotten: the build fails immediately'],
+ mermaid:`flowchart LR
+  S[".sql — plain SQL"] --> G["sqlc generate"]
+  SCHEMA[("Real DB schema")] --> G
+  G --> CODE["Go code: structs + call functions\\nmatching the exact column types"]
+  CODE -.->|"wrong column/type in SQL"| ERR["Fails at build time, not at runtime"]`},
+
+{g:'craft', title:'golang-migrate — schema version control', badge:'Data layer',
+ desc:'Every database structure change (a new table, a new column, a type change...) is written as a numbered <code>up</code> file (apply the change) and <code>down</code> file (undo it). This means the dev, CI, and production databases can always be brought to the exact same state, and a bad change can be rolled back.',
+ impl:'<b>In HPay:</b> <code>db/migrations/000N_name.up.sql</code>/<code>.down.sql</code>; CI runs up → down → up against a clean database to guarantee every change is genuinely reversible.',
+ steps:['Write an up.sql (the new change) and a down.sql (undoing exactly that change)','Run migrate up against a database — applied in numeric order','CI automatically runs up → down → up on a clean DB — if down doesn\'t undo it cleanly, the build fails right at review time'],
+ mermaid:`flowchart LR
+  U["000N.up.sql"] --> A["Applied to the DB"]
+  A --> D["000N.down.sql"] --> B["Undoes exactly that change"]
+  B --> U2["Re-applied (up)"]
+  U2 --> OK["CI: up→down→up must run clean before merge"]`},
+
+{g:'craft', title:'Testcontainers — testing against a real Postgres/Redis', badge:'Testing',
+ desc:'Instead of mocking the database in tests — easy to write, but easy to "test-lie": tests pass while real SQL/transaction logic is actually broken — HPay\'s integration test suite spins up a <b>real</b> Postgres and Redis (via Docker) for every test run, guaranteeing tests exercise real database behavior, including constraints (unique constraints, locks, transactions) a mock can\'t faithfully simulate.',
+ impl:'<b>In HPay:</b> <code>test/integration/</code> — every test uses a connection pool to a real Postgres/Redis, with helpers to clean up data between runs.',
+ steps:['CI/the dev machine starts real Postgres + Redis containers before running tests','Tests create real data and call the same service functions production uses','Results are checked against the real database (not an assumed mock value)','After each test, data is cleaned up/rolled back so it doesn\'t affect the next one'],
+ mermaid:`flowchart LR
+  T["Test run starts"] --> C["Real Postgres + Redis containers spin up (Docker)"]
+  C --> R["Tests call real services, write real data"]
+  R --> V["Results checked against the real DB"]
+  V --> CL["Data cleaned up, ready for the next test"]`},
+
+{g:'craft', title:'Edge-case-ID-driven testing', badge:'Testing',
+ desc:'Instead of only testing the happy path, the team pre-lists the tricky scenarios that tend to cause bugs in financial systems (two people approving at once, a worker dying mid-saga, a network lag causing a double submit, a checker\'s level changing mid-signature...) — each gets an ID (E01, E02...) and must have a test named after that exact ID. CI counts how many IDs have a matching test; a missing one fails the build.',
+ impl:'<b>In HPay:</b> <code>scripts/check-edge-tests.sh</code> scans for every <code>TestEdge_*</code> function and cross-checks it against the required ID list.',
+ steps:['High-risk scenarios are pre-listed (assigned IDs E01, E02...)','A test named TestEdge_E08_... is written for each ID, reproducing exactly that scenario (e.g. two goroutines calling approve concurrently)','CI runs a scan script that cross-checks the required ID list against existing tests','Any missing ID → the build fails, blocking the merge'],
+ mermaid:`flowchart LR
+  L["Pre-known risk list\\n(E01...E20)"] --> T["Each ID → 1 TestEdge_*"]
+  T --> CI["CI scans all tests"]
+  CI --> C{"Every ID covered?"}
+  C -->|"yes"| OK["Build passes"]
+  C -->|"no"| FAIL["Build fails — names the missing ID"]`},
+
+{g:'craft', title:'openapi.yaml — the single source of truth for the API', badge:'API contract',
+ desc:'The entire API is described in one specification file (OpenAPI/Swagger): what each endpoint accepts, returns, and which error codes it can return. The backend, mobile app, and admin site must all match this file instead of each side guessing the contract independently. A script automatically cross-checks the real routes in the Go code against what\'s declared in the file — any mismatch fails immediately, so the docs can never quietly lie.',
+ impl:'<b>In HPay:</b> <code>api/openapi.yaml</code> + <code>scripts/check-openapi-sync.py</code>; the mobile app uses openapi-typescript to generate types straight from this same file.',
+ steps:['Add or change a route in router.go','Update the matching entry in openapi.yaml (including any ERR_* codes)','Run the sync-check script — it cross-references real routes against declared ones','Regenerate TypeScript types for mobile/admin from the latest openapi.yaml'],
+ mermaid:`flowchart LR
+  R["router.go\\n(real routes)"] --> CHK["check-openapi-sync.py"]
+  Y["openapi.yaml\\n(declared routes)"] --> CHK
+  CHK -->|"match"| OK["Passes"]
+  CHK -->|"mismatch"| FAIL["Flags the missing/extra route"]
+  Y --> GEN["openapi-typescript"] --> TS["TypeScript types for mobile/admin"]`},
+
+{g:'craft', title:'Frontend architecture: Expo Router + TanStack Query/Table', badge:'Frontend',
+ desc:'The mobile app uses <b>Expo Router</b> — the file structure itself determines the app\'s routes, with no manual router configuration. Both mobile and admin use <b>TanStack Query</b> to manage server data (automatic caching, automatic refetching) instead of hand-rolling loading/error/refetch state with useState. The admin web app additionally uses <b>TanStack Table</b> for large data grids with server-side pagination.',
+ impl:'<b>In HPay:</b> hpay-mobile\'s <code>app/(main)/...</code> structure = its routes; each feature has a <code>useXQueries.ts</code> file calling an API whose types are generated from openapi.yaml.',
+ steps:['Create a new file under app/ → it automatically becomes a new screen/route','Write a TanStack Query hook that calls the API and declares when its data should be invalidated','Screens just call the hook — no manual loading/error state management','For admin data tables: TanStack Table handles pagination, so the server returns exactly one page of data instead of the whole table'],
+ mermaid:`flowchart LR
+  F["A file under app/"] --> R["Automatically becomes a route"]
+  H["useXQueries.ts"] --> Q["TanStack Query: caches + auto-refetches"]
+  R --> H
+  A["Admin: a large data table"] --> TT["TanStack Table + server-side pagination"]`},
+];
+
+document.documentElement.dataset.theme = document.documentElement.dataset.theme || '';
+
+function initTheme(){
+  try{
+    const saved = localStorage.getItem('hpay-guide-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+}
+initTheme();
+
+function renderNav(){
+  const nav = document.getElementById('rolenav');
+  nav.innerHTML = GROUPS.map(g=>`<a href="#${g.id}">${g.title.replace(/^[^ ]+ /,'')}</a>`).join('');
+}
+
+function renderSections(){
+  const root = document.getElementById('sections');
+  root.innerHTML = GROUPS.map(g=>{
+    const items = FEATURES.filter(f=>f.g===g.id);
+    const cards = items.map((f,i)=>`
+      <button class="card" data-idx="${FEATURES.indexOf(f)}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span class="badge">${f.badge}</span>
+        <span class="title">${f.title}</span>
+        <span class="sub">${f.desc.slice(0,100).replace(/<[^>]+>/g,'')}…</span>
+      </button>`).join('');
+    return `<section class="role ${g.cls}" id="${g.id}">
+      <div class="role-head"><h2>${g.title}</h2><span class="role-tag">${g.tag}</span></div>
+      <p class="role-desc">${g.desc}</p>
+      <div class="cards">${cards}</div>
+    </section>`;
+  }).join('');
+
+  root.querySelectorAll('.card').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.idx,10)));
+  });
+}
+
+const diagramCache = {};
+async function openModal(idx){
+  const f = FEATURES[idx];
+  const overlay = document.getElementById('overlay');
+  document.getElementById('m-badge').textContent = f.badge;
+  document.getElementById('m-badge').style.background = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).background;
+  document.getElementById('m-badge').style.color = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).color;
+  document.getElementById('m-title').innerHTML = f.title;
+  document.getElementById('m-desc').innerHTML = f.desc;
+  document.getElementById('m-impl').innerHTML = f.impl;
+  document.getElementById('m-steps').innerHTML = f.steps.map((s,i)=>`<li><span class="dot">${i+1}</span><span class="txt">${s}</span></li>`).join('');
+  const dbox = document.getElementById('m-diagram');
+  dbox.innerHTML = '<span class="loading">Rendering diagram…</span>';
+  overlay.classList.add('open');
+
+  if(diagramCache[idx]){
+    dbox.innerHTML = diagramCache[idx];
+  } else {
+    try{
+      const themeAttr = document.documentElement.getAttribute('data-theme');
+      const isDark = themeAttr ? themeAttr === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      mermaid.initialize({startOnLoad:false, theme: isDark ? 'dark' : 'neutral', flowchart:{curve:'basis'}, themeVariables:{fontSize:'13px'}});
+      const {svg} = await mermaid.render('dg-'+idx+'-'+Date.now(), f.mermaid);
+      diagramCache[idx] = svg;
+      dbox.innerHTML = svg;
+    }catch(e){
+      dbox.innerHTML = '<span class="loading">Could not render this diagram.</span>';
+    }
+  }
+}
+
+document.getElementById('m-close').addEventListener('click', ()=>{
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') document.getElementById('overlay').classList.remove('open');
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') document.getElementById('overlay').classList.remove('open');
+});
+
+renderNav();
+renderSections();
+</script>
+</body>
+</html>

@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HPay — Kiến trúc &amp; khái niệm kỹ thuật</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --paper:#F4F5F2; --surface:#FFFFFF; --surface-2:#FBFBF9;
+  --ink:#151A17; --ink-2:#4B534D; --ink-3:#7C837D;
+  --line:#DFE1DB; --line-soft:#ECEDE9;
+  --money:#0F5C4E; --money-ink:#0A3E34; --money-tint:#E4F1EC;
+  --engine:#9A4A22; --engine-ink:#6E3417; --engine-tint:#F7EBE1;
+  --security:#33527D; --security-ink:#23395A; --security-tint:#E7ECF4;
+  --ai:#5C4A8C; --ai-ink:#3E3161; --ai-tint:#EEEBF7;
+  --craft:#7A5E10; --craft-ink:#59440B; --craft-tint:#F5EFDD;
+  --ok:#1D7A4C; --warn:#A66A0E; --bad:#B23A3A;
+  --font-head:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,'Cascadia Code',Consolas,monospace;
+  --radius:10px;
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+  --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+  --line:#31363B; --line-soft:#282C31;
+  --money:#4FC9A8; --money-ink:#8FE0C7; --money-tint:#173029;
+  --engine:#E1935E; --engine-ink:#F0BE95; --engine-tint:#33241A;
+  --security:#8FADDA; --security-ink:#BBCFEF; --security-tint:#1D2A3E;
+  --ai:#B6A6E8; --ai-ink:#D2C6F4; --ai-tint:#251F3A;
+  --craft:#E0C060; --craft-ink:#F0DB9E; --craft-tint:#332A0F;
+  --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+    --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+    --line:#31363B; --line-soft:#282C31;
+    --money:#4FC9A8; --money-ink:#8FE0C7; --money-tint:#173029;
+    --engine:#E1935E; --engine-ink:#F0BE95; --engine-tint:#33241A;
+    --security:#8FADDA; --security-ink:#BBCFEF; --security-tint:#1D2A3E;
+    --ai:#B6A6E8; --ai-ink:#D2C6F4; --ai-tint:#251F3A;
+    --craft:#E0C060; --craft-ink:#F0DB9E; --craft-tint:#332A0F;
+    --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;font-size:15.5px}
+.wrap{max-width:1120px;margin:0 auto;padding:36px 24px 120px}
+a{color:var(--money)}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;text-wrap:balance;color:var(--ink);margin:0}
+
+header.top{display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+header.top h1{font-size:34px;letter-spacing:-.01em}
+header.top .lede{max-width:720px;color:var(--ink-2);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+.langbar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-3)}
+.langbar a{font-weight:600;text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
+.langbar a.current{background:var(--money);color:#fff;border-color:var(--money)}
+
+nav.rolenav{position:sticky;top:0;background:var(--paper);z-index:20;padding:14px 0;margin:0 0 28px;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+nav.rolenav a{text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+nav.rolenav a:hover{border-color:var(--ink-3)}
+
+section.role{margin:56px 0}
+.role-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.role-head h2{font-size:24px}
+.role-tag{font-size:11.5px;font-weight:700;letter-spacing:.03em;padding:3px 10px;border-radius:99px}
+.role-desc{color:var(--ink-2);max-width:760px;margin:8px 0 22px;font-size:15px}
+
+.g-money .role-tag{background:var(--money-tint);color:var(--money-ink)}
+.g-engine .role-tag{background:var(--engine-tint);color:var(--engine-ink)}
+.g-security .role-tag{background:var(--security-tint);color:var(--security-ink)}
+.g-ai .role-tag{background:var(--ai-tint);color:var(--ai-ink)}
+.g-craft .role-tag{background:var(--craft-tint);color:var(--craft-ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{
+  text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;cursor:pointer;font-family:var(--font-body);color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;transition:border-color .12s ease,transform .12s ease;
+}
+.card:hover{border-color:var(--ink-3)}
+.card:active{transform:scale(0.99)}
+.card .num{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+.card .title{font-weight:600;font-size:15px;line-height:1.35}
+.card .sub{font-size:13px;color:var(--ink-2);line-height:1.45}
+.card .badge{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;margin-top:2px}
+.g-money .card .badge{background:var(--money-tint);color:var(--money-ink)}
+.g-engine .card .badge{background:var(--engine-tint);color:var(--engine-ink)}
+.g-security .card .badge{background:var(--security-tint);color:var(--security-ink)}
+.g-ai .card .badge{background:var(--ai-tint);color:var(--ai-ink)}
+.g-craft .card .badge{background:var(--craft-tint);color:var(--craft-ink)}
+
+.overlay{position:fixed;inset:0;background:rgba(10,12,10,.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;max-width:780px;width:100%;padding:0;box-shadow:0 24px 64px rgba(0,0,0,.28);margin-bottom:5vh}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:24px 26px 16px;border-bottom:1px solid var(--line-soft)}
+.modal-head .badge{font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.modal-head h3{font-size:21px;line-height:1.3}
+.modal-close{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;flex:none}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:20px 26px 26px;display:flex;flex-direction:column;gap:20px}
+.modal-body .desc{color:var(--ink-2);font-size:14.5px}
+.modal-body .impl{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--ink-2)}
+.modal-body .impl b{color:var(--ink)}
+.modal-body .impl code{font-family:var(--font-mono);font-size:12px;background:var(--surface);border:1px solid var(--line-soft);padding:1px 5px;border-radius:4px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:12px;font-size:13.5px}
+.steps li .dot{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-2)}
+.steps li .txt{padding-top:2px;color:var(--ink)}
+.steps li .txt code{font-family:var(--font-mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.diagram-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;margin-bottom:8px}
+.diagram-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram-box svg{max-width:100%;height:auto}
+.diagram-box .loading{font-size:13px;color:var(--ink-3);font-style:italic}
+
+footer{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:640px){header.top h1{font-size:27px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="langbar">
+    <span>🌐</span>
+    <a href="technical-overview.vi.html" class="current">Tiếng Việt</a>
+    <a href="technical-overview.en.html">English</a>
+    <span style="margin-left:auto"></span>
+    <a href="functional-overview.vi.html">← Xem bản chức năng</a>
+  </div>
+  <div class="eyebrow">Tài liệu kỹ thuật · để tự đọc hiểu code đã được viết hộ</div>
+  <h1>HPay — kiến trúc &amp; các khái niệm kỹ thuật đang dùng</h1>
+  <p class="lede">Tài liệu này giải thích <b>các khái niệm kỹ thuật nền tảng</b> đứng sau từng chức năng ở bản giới thiệu (ACID, workflow engine kiểu saga, mã hoá &amp; xác thực, AI, cách tổ chức code...) — dành cho người chưa quen các khái niệm này, để tự đánh giá được hệ thống đang thiếu gì, rủi ro ở đâu, trước khi tiếp tục phát triển.</p>
+  <div class="chips">
+    <span class="chip">Go · Gin · sqlc · PostgreSQL 16</span>
+    <span class="chip">Redis 7 (Streams + cron)</span>
+    <span class="chip">Claude API (có mock fallback)</span>
+    <span class="chip">React / React Native</span>
+  </div>
+</header>
+
+<nav class="rolenav" id="rolenav"></nav>
+
+<div id="sections"></div>
+
+<footer>
+  <span>HPay · tài liệu kỹ thuật · nhấn vào từng khái niệm để xem giải thích + sơ đồ</span>
+  <span>Bản chức năng (giới thiệu sản phẩm) → <a href="functional-overview.vi.html">functional-overview.vi.html</a></span>
+</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <span class="badge" id="m-badge"></span>
+        <h3 id="m-title"></h3>
+      </div>
+      <button class="modal-close" id="m-close" aria-label="Đóng">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="desc" id="m-desc"></p>
+      <div class="impl" id="m-impl"></div>
+      <div>
+        <div class="diagram-label">Cách hoạt động</div>
+        <ol class="steps" id="m-steps"></ol>
+      </div>
+      <div>
+        <div class="diagram-label">Sơ đồ</div>
+        <div class="diagram-box" id="m-diagram"><span class="loading">Đang dựng sơ đồ…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  {id:'money', cls:'g-money', tag:'TIỀN & ACID', title:'💰 Tiền &amp; tính đúng đắn (ACID)',
+   desc:'Nhóm khái niệm đảm bảo <b>tiền không bao giờ tự sinh ra, tự mất đi, hay bị đếm sai</b> — nền tảng của bất kỳ hệ thống tài chính nào, quan trọng hơn mọi tính năng khác.'},
+  {id:'engine', cls:'g-engine', tag:'WORKFLOW & DUYỆT', title:'⚙️ Xử lý luồng nghiệp vụ &amp; phân quyền duyệt',
+   desc:'Cách một giao dịch "đi" qua nhiều bước xử lý một cách đáng tin cậy (kể cả khi có lỗi mạng, máy chủ crash giữa chừng), và cách hệ thống bắt buộc phải có "người thứ hai" ký duyệt cho các thao tác nhạy cảm.'},
+  {id:'security', cls:'g-security', tag:'BẢO MẬT', title:'🔐 Xác thực &amp; bảo mật',
+   desc:'Cách hệ thống xác minh "bạn đúng là bạn" và giới hạn thiệt hại nếu có thông tin bị lộ.'},
+  {id:'ai', cls:'g-ai', tag:'AI', title:'🤖 AI trong hệ thống',
+   desc:'Những chỗ thực sự có AI (không phải marketing) — và nguyên tắc quan trọng nhất: AI không bao giờ được tự quyết định về tiền.'},
+  {id:'craft', cls:'g-craft', tag:'KỸ THUẬT NỀN', title:'🛠️ Kỹ thuật nền tảng',
+   desc:'Cách code được tổ chức, kiểm tra và triển khai để giảm rủi ro lỗi — những lựa chọn công cụ không "nhìn thấy" trên giao diện nhưng ảnh hưởng tới chất lượng lâu dài.'},
+];
+
+const FEATURES = [
+{g:'money', title:'Sổ cái kế toán kép (double-entry ledger)', badge:'Ledger',
+ desc:'Khái niệm kế toán hàng trăm năm tuổi: mỗi giao dịch tiền không phải là "một số dư đổi", mà là ít nhất <b>2 bút toán</b> — một bên ghi Nợ (tiền rời khỏi đâu), một bên ghi Có (tiền tới đâu) — và tổng hai bên luôn bằng nhau. Nhờ vậy, số dư ví không phải một con số rời rạc dễ bị sửa nhầm, mà luôn có thể tính lại từ toàn bộ lịch sử bút toán để đối chiếu.',
+ impl:'<b>Ở HPay:</b> <code>internal/ledger</code> — bảng <code>ledger_entries</code> (direction: debit/credit). <code>wallets.balance</code> luôn phải bằng <code>SUM(ledger_entries)</code> của ví đó; job đối soát nội bộ kiểm tra điều này mỗi ngày.',
+ steps:['1 giao dịch P2P sinh ra ≥2 bút toán: Nợ ví người gửi, Có ví người nhận','Cả 2 bút toán được ghi trong cùng 1 database transaction — hoặc cả hai cùng thành công, hoặc không bút toán nào được ghi','Số dư ví = tổng tất cả bút toán liên quan — không lưu số dư "rời" dễ lệch','Job đối soát nội bộ chạy định kỳ, so khớp lại để phát hiện sớm nếu có sai lệch'],
+ mermaid:`flowchart LR
+  T["1 giao dịch chuyển 100k"] --> D["Bút toán Nợ: ví A -100k"]
+  T --> C["Bút toán Có: ví B +100k"]
+  D & C -->|"cùng 1 DB transaction"| OK["Ghi sổ hoặc không ghi gì cả"]
+  OK --> BAL["Số dư ví = SUM(bút toán)"]`},
+
+{g:'money', title:'Atomicity qua database transaction', badge:'ACID',
+ desc:'"A" trong ACID = Atomicity: một nhóm thao tác trên database phải xảy ra <b>toàn bộ hoặc không xảy ra gì cả</b>, không có trạng thái nửa vời. Nếu giữa chừng có lỗi, toàn bộ nhóm thao tác bị huỷ bỏ (rollback) như chưa từng xảy ra.',
+ impl:'<b>Ở HPay:</b> mọi thao tác ghi sổ cái, tạo giao dịch, cập nhật trạng thái workflow đều bọc trong 1 Postgres transaction (<code>tx.Begin()</code> ... <code>tx.Commit()</code>/<code>Rollback()</code>).',
+ steps:['Bắt đầu 1 database transaction','Thực hiện nhiều thao tác ghi (vd: ghi 2 bút toán + cập nhật trạng thái giao dịch)','Nếu tất cả thành công: commit — toàn bộ thay đổi có hiệu lực cùng lúc','Nếu bất kỳ bước nào lỗi: rollback — mọi thay đổi trong nhóm bị huỷ, database như chưa từng đổi'],
+ mermaid:`flowchart TB
+  B["BEGIN transaction"] --> S1["Ghi bút toán Nợ"]
+  S1 --> S2["Ghi bút toán Có"]
+  S2 --> S3["Cập nhật trạng thái giao dịch"]
+  S3 -->|"tất cả OK"| CM["COMMIT — có hiệu lực cùng lúc"]
+  S1 -.->|"lỗi ở bất kỳ đâu"| RB["ROLLBACK — huỷ toàn bộ, như chưa xảy ra"]
+  S2 -.-> RB
+  S3 -.-> RB`},
+
+{g:'money', title:'Thứ tự khoá (lock ordering) — tránh deadlock', badge:'Concurrency',
+ desc:'Khi 2 giao dịch cùng lúc động vào 2 ví giống nhau nhưng theo thứ tự ngược nhau (giao dịch 1 khoá ví A rồi chờ ví B; giao dịch 2 khoá ví B rồi chờ ví A), cả hai sẽ chờ nhau mãi mãi — gọi là <b>deadlock</b>. Cách giải quyết kinh điển: luôn khoá các ví theo một thứ tự cố định (vd: theo ID tăng dần), bất kể ai là người gửi hay người nhận.',
+ impl:'<b>Ở HPay:</b> trước khi trừ/cộng tiền, các ví liên quan được lấy khoá bằng <code>SELECT ... FOR UPDATE</code> theo thứ tự <code>wallet_id</code> tăng dần, không theo thứ tự "người gửi trước".',
+ steps:['Giao dịch cần khoá ví A và ví B để cập nhật số dư','Sắp xếp 2 ví theo ID, luôn khoá ví có ID nhỏ hơn trước','Khoá ví thứ hai sau','Vì MỌI giao dịch đều tuân theo cùng thứ tự này, không bao giờ xảy ra tình huống 2 giao dịch chờ chéo nhau'],
+ mermaid:`flowchart LR
+  T1["Giao dịch: A→B"] -->|"luôn khoá theo ID tăng dần"| L1["Khoá ví có ID nhỏ hơn trước"]
+  T2["Giao dịch: B→A"] -->|"cũng theo đúng luật này"| L1
+  L1 --> L2["Khoá ví ID lớn hơn sau"]
+  L2 --> OK["Không bao giờ chờ chéo nhau (deadlock)"]`},
+
+{g:'money', title:'Idempotency key — chống tính tiền 2 lần', badge:'Reliability',
+ desc:'Khi mạng chập chờn, client không biết chắc yêu cầu vừa gửi có tới server hay không, nên có xu hướng gửi lại. Nếu server cứ thấy yêu cầu là xử lý, tiền có thể bị trừ/cộng 2 lần. Giải pháp: client gắn một mã ngẫu nhiên duy nhất cho mỗi <i>ý định</i> giao dịch (không phải mỗi lần gửi HTTP); server dùng ràng buộc duy nhất (unique constraint) trên mã này để chỉ xử lý đúng 1 lần, các lần gửi lại trả về đúng kết quả cũ.',
+ impl:'<b>Ở HPay:</b> header <code>Idempotency-Key</code> bắt buộc trên mọi endpoint tạo tiền, middleware kiểm tra unique constraint trong Postgres trước khi cho xử lý tiếp.',
+ steps:['Client sinh 1 mã ngẫu nhiên duy nhất khi người dùng bấm "Gửi"','Gửi request kèm mã này trong header','Server: nếu mã đã tồn tại trong DB → trả lại kết quả giao dịch cũ, không xử lý lại','Nếu mã chưa tồn tại → xử lý bình thường, lưu mã lại để lần sau nhận diện'],
+ mermaid:`flowchart LR
+  R1["Request #1 (key=X)"] --> DB{"Key X đã có trong DB?"}
+  DB -->|"chưa"| P["Xử lý giao dịch, lưu key X"]
+  R2["Request #2 (mạng lag, gửi lại, key=X)"] --> DB
+  DB -->|"đã có"| RET["Trả lại kết quả giao dịch gốc"]`},
+
+{g:'money', title:'Sổ cái bất biến (append-only)', badge:'Ledger',
+ desc:'Không bao giờ UPDATE hay DELETE một dòng bút toán đã ghi — kể cả khi có sai sót. Muốn "sửa", hệ thống ghi thêm bút toán mới đảo chiều (hoàn tiền = giao dịch mới trỏ ngược lại giao dịch gốc). Điều này giữ nguyên toàn bộ lịch sử thật, phục vụ kiểm toán và điều tra sau này.',
+ impl:'<b>Ở HPay:</b> bảng <code>ledger_entries</code> chỉ có thao tác INSERT trong toàn bộ code; hoàn tiền (reversal) tạo bút toán mới có cột <code>reversal_of</code> trỏ về giao dịch gốc.',
+ steps:['Phát hiện giao dịch cần hoàn tiền','KHÔNG sửa hay xoá bút toán gốc','Tạo bút toán mới, chiều ngược lại, với liên kết reversal_of trỏ về gốc','Lịch sử đầy đủ vẫn còn nguyên: nhìn vào sổ cái thấy cả giao dịch gốc lẫn giao dịch hoàn tiền'],
+ mermaid:`flowchart LR
+  O["Giao dịch gốc: A→B 100k"] --> L["Bút toán gốc (không sửa được)"]
+  X["Phát hiện cần hoàn tiền"] --> N["Bút toán MỚI: B→A 100k\\n(reversal_of = giao dịch gốc)"]
+  L --> H["Lịch sử đầy đủ: thấy cả 2 giao dịch"]
+  N --> H`},
+
+{g:'engine', title:'Workflow engine = state machine cấu hình được', badge:'Engine',
+ desc:'Thay vì viết cứng "chuyển tiền thì làm A rồi B rồi C" trong code, mỗi loại giao dịch là một <b>định nghĩa luồng</b> lưu dưới dạng dữ liệu (JSON, có version) — gồm danh sách các bước và loại từng bước (tự động hay cần người duyệt). Muốn thêm 1 loại giao dịch mới, chỉ cần thêm dữ liệu định nghĩa, không cần sửa code xử lý.',
+ impl:'<b>Ở HPay:</b> <code>internal/workflow</code>, bảng <code>workflow_definitions</code> (JSONB, version hoá) + <code>workflow_instances</code> (1 giao dịch = 1 instance đang chạy) + <code>step_executions</code> (nhật ký từng bước).',
+ steps:['1 giao dịch mới → tạo 1 "instance" đi theo đúng định nghĩa luồng của loại giao dịch đó','Từng bước (step) chạy tuần tự: bước tự động (validate, trừ tiền...) hoặc bước treo chờ người duyệt','Mỗi lần chạy 1 bước đều được ghi log riêng (step_executions) — phục vụ tra soát sau này','Thêm loại giao dịch mới = thêm 1 dòng định nghĩa mới, không đụng vào code đang chạy'],
+ mermaid:`flowchart LR
+  DEF[("workflow_definitions\\n(JSON, có version)")] --> INST["1 giao dịch → 1 instance"]
+  INST --> S1["Bước 1: tự động"]
+  S1 --> S2["Bước 2: tự động"]
+  S2 --> S3{"Bước 3: cần người duyệt?"}
+  S3 -->|"có"| WAIT["Treo, chờ ký duyệt"]
+  S3 -->|"không"| S4["Bước tiếp theo"]`},
+
+{g:'engine', title:'Transactional outbox — chống mất/trùng sự kiện', badge:'Pattern',
+ desc:'Vấn đề kinh điển: nếu vừa ghi database vừa gửi tin nhắn/sự kiện ra hàng đợi (Redis, Kafka...) như 2 thao tác riêng biệt, có thể xảy ra 1 trong 2 việc thất bại còn việc kia thành công — dữ liệu và sự kiện lệch nhau. Giải pháp "outbox": ghi sự kiện vào <b>cùng 1 database transaction</b> với thay đổi dữ liệu (vào 1 bảng "outbox" tạm), rồi một tiến trình riêng đọc bảng đó và thực sự gửi đi.',
+ impl:'<b>Ở HPay:</b> bảng <code>outbox</code> ghi trong cùng transaction với mọi thay đổi trạng thái workflow; một "outbox relay" định kỳ đọc bảng này và đẩy vào Redis Streams.',
+ steps:['Thay đổi trạng thái workflow + ghi 1 dòng vào bảng outbox — CÙNG 1 transaction','Transaction commit: cả 2 chắc chắn cùng có hiệu lực, hoặc cùng không','Tiến trình outbox relay định kỳ đọc các dòng outbox chưa gửi','Đẩy sự kiện vào Redis Streams, đánh dấu đã gửi'],
+ mermaid:`flowchart LR
+  TX["1 DB transaction"] --> D["Đổi trạng thái workflow"]
+  TX --> O["Ghi 1 dòng vào bảng outbox"]
+  D & O -->|"commit cùng lúc"| C["Chắc chắn đồng bộ"]
+  C --> R["Outbox relay đọc định kỳ"]
+  R --> RS["Đẩy vào Redis Streams"]`},
+
+{g:'engine', title:'Redis Streams consumer group', badge:'Messaging',
+ desc:'Khác với Pub/Sub thông thường (gửi sự kiện đi, ai không có mặt lúc đó thì mất luôn), Redis Streams lưu lại sự kiện và theo dõi "consumer group nào đã đọc tới đâu". Nếu 1 worker nhận sự kiện nhưng chưa xác nhận xử lý xong (XACK) mà bị crash, sự kiện đó vẫn còn đó để worker khác nhận lại — không bị mất.',
+ impl:'<b>Ở HPay:</b> mỗi loại bước xử lý (validator, fraud check, wallet, confirmer...) là 1 consumer group riêng trên Redis Streams, xác nhận bằng XACK sau khi xử lý xong.',
+ steps:['Sự kiện được đẩy vào 1 Stream (không biến mất sau khi gửi)','Worker trong 1 consumer group đọc sự kiện, bắt đầu xử lý','Nếu worker crash giữa chừng: sự kiện chưa được XACK, vẫn "treo" trong stream','Worker khác (hoặc chính worker đó sau khi khởi động lại) nhận lại đúng sự kiện đó để xử lý tiếp'],
+ mermaid:`flowchart LR
+  E["Sự kiện"] --> ST[("Redis Stream\\n(lưu lại, không mất)")]
+  ST --> W1["Worker nhận, xử lý"]
+  W1 -.->|"crash trước khi XACK"| ST
+  ST --> W2["Worker khác nhận lại đúng sự kiện"]
+  W2 -->|"xử lý xong"| ACK["XACK — đánh dấu hoàn tất"]`},
+
+{g:'engine', title:'Saga compensation — bồi hoàn khi lỗi giữa chừng', badge:'Pattern',
+ desc:'Một giao dịch chạy qua nhiều bước — nếu bước thứ 3 thất bại sau khi bước 1 và 2 đã xong (vd: đã trừ tiền người gửi), hệ thống không thể "quay ngược thời gian" vì mỗi bước là 1 transaction riêng đã commit. Giải pháp Saga: chạy thêm các bước "bồi hoàn" (compensation) để đảo ngược tác động của các bước đã hoàn thành, theo thứ tự ngược lại.',
+ impl:'<b>Ở HPay:</b> mỗi step handler có cả hàm xử lý chính và hàm compensate (idempotent); khi 1 bước lỗi không thể retry, engine chạy compensate cho các bước trước đó theo thứ tự ngược.',
+ steps:['Bước 1 (trừ tiền người gửi): thành công','Bước 2 (kiểm tra gian lận): thành công','Bước 3 (cộng tiền người nhận): thất bại, hết lượt thử lại','Engine chạy compensation cho bước 1: hoàn lại tiền cho người gửi bằng bút toán đảo (không xoá bút toán gốc)'],
+ mermaid:`flowchart LR
+  S1["Bước 1: trừ tiền ✅"] --> S2["Bước 2: check gian lận ✅"]
+  S2 --> S3["Bước 3: cộng tiền ❌ (hết lượt thử)"]
+  S3 --> COMP["Chạy compensation theo thứ tự ngược"]
+  COMP --> C1["Bồi hoàn bước 1: hoàn tiền cho người gửi"]`},
+
+{g:'engine', title:'Recovery sweeper (claim-lease)', badge:'Reliability',
+ desc:'Một tiến trình chạy định kỳ quét các giao dịch "kẹt" quá lâu (máy chủ xử lý bước đó bị crash, không kịp báo cáo kết quả). Để 2 sweeper chạy song song không cùng "nhặt" một giao dịch và xử lý trùng, mỗi giao dịch được "claim" (giành quyền xử lý) bằng 1 câu UPDATE có điều kiện — chỉ 1 sweeper thắng, giao dịch được đánh dấu "đang được ai đó xử lý" (lease) trước khi thực sự retry.',
+ impl:'<b>Ở HPay:</b> job quét mỗi 5 phút tìm instance ở trạng thái running/compensating quá ngưỡng thời gian, claim bằng UPDATE ... WHERE status=... RETURNING (chỉ 1 request thắng do ràng buộc điều kiện).',
+ steps:['Sweeper quét các instance "running" quá lâu (vd: >10 phút không cập nhật)','Thử claim bằng 1 câu UPDATE có điều kiện — chỉ thành công nếu chưa ai claim','Nếu claim thành công: retry lại đúng bước đang dở (handler phải idempotent)','Nếu retry vẫn lỗi nhiều lần: đóng giao dịch là thất bại, chạy compensation'],
+ mermaid:`flowchart LR
+  SW1["Sweeper #1"] -->|"UPDATE ... WHERE chưa claim"| DB[("Instance bị kẹt")]
+  SW2["Sweeper #2 (chạy song song)"] -->|"cùng thử claim"| DB
+  DB -->|"chỉ 1 người thắng"| WIN["Sweeper thắng: retry lại bước dở"]
+  DB -->|"người thua"| LOSE["Không làm gì, bỏ qua"]`},
+
+{g:'engine', title:'Maker-checker / approval engine', badge:'Authorization',
+ desc:'Nguyên tắc "tách biệt nhiệm vụ" (separation of duties): người đề xuất một hành động nhạy cảm không được là người duyệt hành động đó — cần ít nhất 1 người khác đồng ý. HPay xây engine này <b>tổng quát</b>, dùng chung cho cả lệnh chi doanh nghiệp lẫn thao tác admin nhạy cảm (hoàn tiền, khoá tài khoản, đổi chính sách) — không phải viết riêng từng luồng.',
+ impl:'<b>Ở HPay:</b> <code>internal/approval</code> — bảng <code>approval_requests</code> có cột <code>subject_type</code> (org_txn / reversal / account_lock / policy_change) dùng chung 1 state machine; mỗi lượt ký cần OTP riêng cho từng người duyệt.',
+ steps:['Người đề xuất tạo 1 approval_request, đóng băng ("snapshot") chính sách đang áp dụng tại thời điểm đó','Người duyệt xem yêu cầu, nhập OTP riêng để xác nhận chữ ký','Đủ số chữ ký theo policy đã snapshot → engine thực thi hành động thật (chuyển tiền / hoàn tiền / khoá TK...)','Toàn bộ được ghi vào audit log không thể sửa'],
+ mermaid:`flowchart LR
+  P["Người đề xuất"] --> R["approval_request\\n+ policy snapshot"]
+  R --> C1["Người duyệt #1: ký OTP"]
+  C1 --> C2{"Đủ chữ ký chưa?"}
+  C2 -->|"đủ"| EX["Thực thi hành động thật"]
+  C2 -->|"chưa"| C3["Người duyệt #2: ký OTP"]
+  C3 --> C2`},
+
+{g:'security', title:'JWT access/refresh rotation + phát hiện đánh cắp', badge:'Auth',
+ desc:'Access token sống ngắn (vài phút–giờ) để giảm thiệt hại nếu bị lộ; refresh token sống dài hơn nhưng <b>chỉ dùng được đúng 1 lần</b> — mỗi lần app xin access token mới, refresh token cũ bị "đốt" và cấp 1 refresh token mới (rotation). Nếu server thấy 1 refresh token đã bị dùng rồi mà lại có ai dùng lại lần nữa, đó chắc chắn là dấu hiệu bị đánh cắp — toàn bộ "gia đình" token trên mọi thiết bị bị thu hồi ngay.',
+ impl:'<b>Ở HPay:</b> <code>internal/auth</code> — mỗi refresh token thuộc 1 <code>family_id</code>; dùng lại token đã <code>used_at</code> → thu hồi cả family, ghi audit log.',
+ steps:['Đăng nhập: cấp access token (ngắn hạn) + refresh token (dài hạn), gắn vào 1 "family"','App hết access token → gửi refresh token để xin cặp mới','Server đánh dấu refresh token cũ là "đã dùng", cấp cặp mới cùng family','Nếu refresh token "đã dùng" bị gửi lại lần nữa → nghi bị đánh cắp → thu hồi toàn bộ family, bắt đăng nhập lại'],
+ mermaid:`sequenceDiagram
+  actor U as App
+  participant S as Server
+  U->>S: Đăng nhập
+  S-->>U: access token + refresh token (family F1)
+  U->>S: Refresh (dùng refresh F1)
+  S-->>U: access mới + refresh mới (vẫn family F1, refresh cũ bị đốt)
+  Note over U,S: Kẻ tấn công dùng lại refresh CŨ đã bị đốt
+  U->>S: Refresh (dùng lại refresh cũ)
+  S->>S: Phát hiện reuse → thu hồi CẢ family F1`},
+
+{g:'security', title:'argon2id băm mật khẩu', badge:'Auth',
+ desc:'Mật khẩu không bao giờ lưu dạng chữ thường (plaintext), cũng không dùng thuật toán băm nhanh như MD5/SHA (dễ bị dò bằng máy tính mạnh/GPU). argon2id là thuật toán "memory-hard" — cố tình tốn nhiều RAM và thời gian để băm, khiến việc dò hàng loạt mật khẩu (brute-force) trở nên cực kỳ tốn kém, ngay cả khi kẻ tấn công có phần cứng mạnh.',
+ impl:'<b>Ở HPay:</b> <code>internal/auth/password.go</code>, dùng <code>golang.org/x/crypto/argon2</code>, lưu dạng chuỗi mã hoá kèm tham số (memory, time, threads) + salt riêng cho mỗi mật khẩu.',
+ steps:['Người dùng đặt mật khẩu','Sinh 1 "salt" ngẫu nhiên riêng cho lần đặt này','Băm mật khẩu + salt bằng argon2id (tốn nhiều RAM/thời gian có chủ đích)','Lưu kết quả băm + salt + tham số — không bao giờ lưu mật khẩu gốc'],
+ mermaid:`flowchart LR
+  P["Mật khẩu người dùng"] --> S["+ salt ngẫu nhiên"]
+  S --> H["argon2id (cố ý tốn RAM + thời gian)"]
+  H --> DB[("Lưu: hash + salt + tham số")]
+  DB -.->|"không bao giờ"| PLAIN["Lưu mật khẩu gốc"]`},
+
+{g:'security', title:'Giới hạn thiết bị (device binding)', badge:'Auth',
+ desc:'Phiên đăng nhập được gắn với một thiết bị cụ thể (qua 1 mã định danh thiết bị app tự sinh) — giúp phát hiện và cảnh báo khi có đăng nhập từ thiết bị lạ, và giới hạn thiệt hại nếu token bị lộ (token đó gắn với 1 thiết bị, không tự do dùng ở bất kỳ đâu).',
+ impl:'<b>Ở HPay:</b> header <code>X-Device-Id</code> gửi kèm các request nhạy cảm, ghi lại cùng token/audit log để đối chiếu.',
+ steps:['App tự sinh 1 mã định danh thiết bị khi cài đặt lần đầu','Mã này gửi kèm các yêu cầu đăng nhập/nhạy cảm','Server ghi nhận thiết bị nào gắn với phiên nào','Đăng nhập từ thiết bị chưa từng thấy có thể kích hoạt cảnh báo/xác minh thêm'],
+ mermaid:`flowchart LR
+  A["App cài lần đầu"] --> D["Sinh mã định danh thiết bị"]
+  D --> L["Gửi kèm khi đăng nhập"]
+  L --> S["Server gắn thiết bị vào phiên đăng nhập"]
+  S -.->|"thiết bị lạ"| W["Có thể cảnh báo / xác minh thêm"]`},
+
+{g:'security', title:'Giới hạn tốc độ (rate limiting)', badge:'Security',
+ desc:'Chặn một người/IP gửi quá nhiều yêu cầu trong thời gian ngắn — vừa chống dò mật khẩu/OTP hàng loạt, vừa bảo vệ hệ thống khỏi bị quá tải. Đếm số lần gọi được lưu ở Redis (nhanh, dùng chung được giữa nhiều máy chủ) thay vì bộ nhớ riêng của từng máy chủ.',
+ impl:'<b>Ở HPay:</b> middleware <code>RateLimit</code>/<code>RateLimitUser</code> áp cho các endpoint nhạy cảm (đăng nhập, xin OTP, tra cứu người dùng...), đếm theo Redis với cửa sổ thời gian.',
+ steps:['Mỗi lần gọi 1 endpoint nhạy cảm, middleware tăng bộ đếm trong Redis (theo IP hoặc theo user)','Nếu vượt ngưỡng trong khoảng thời gian quy định → từ chối yêu cầu, báo lỗi rõ ràng','Bộ đếm tự hết hạn sau cửa sổ thời gian, cho phép thử lại'],
+ mermaid:`flowchart LR
+  R["Yêu cầu tới endpoint nhạy cảm"] --> C["Tăng bộ đếm trong Redis"]
+  C --> L{"Vượt ngưỡng?"}
+  L -->|"chưa"| OK["Cho qua"]
+  L -->|"rồi"| BLOCK["429 — từ chối, thử lại sau"]`},
+
+{g:'ai', title:'KYC vision scoring', badge:'AI · KYC',
+ desc:'AI đọc ảnh giấy tờ tuỳ thân + ảnh selfie, trả về một điểm số tin cậy kèm lý do bằng ngôn ngữ tự nhiên — thay vì con người phải tự nhìn từng hồ sơ một để đánh giá ban đầu. AI chỉ đưa ra <b>gợi ý có điểm số</b>; ngưỡng điểm nào tự động duyệt, ngưỡng nào cần người duyệt lại là do quy tắc cứng của hệ thống quyết định.',
+ impl:'<b>Ở HPay:</b> <code>internal/kyc</code> gọi Claude vision API; nếu không có API key (môi trường dev/CI), tự động dùng bản mock trả kết quả giả định để không phụ thuộc mạng khi test.',
+ steps:['Người dùng gửi ảnh CCCD + selfie','Gọi Claude vision API, nhận về {điểm số, lý do}','Điểm cao (vd ≥85): tự động duyệt','Điểm giữa (vd 50–85): vào hàng chờ, người duyệt xem cả ảnh lẫn giải thích AI','Điểm thấp: tự động từ chối'],
+ mermaid:`flowchart LR
+  I["Ảnh CCCD + selfie"] --> AI["Claude vision API\\n(mock nếu không có API key)"]
+  AI --> SC["{score, lý do}"]
+  SC -->|"score cao"| A["Tự động duyệt"]
+  SC -->|"score giữa"| H["Người duyệt xem lại"]
+  SC -->|"score thấp"| R["Tự động từ chối"]`},
+
+{g:'ai', title:'Fraud hybrid: luật cứng + AI advisory', badge:'AI · Fraud',
+ desc:'Nguyên tắc quan trọng nhất: <b>AI không bao giờ tự ý chặn tiền</b>. Luật cứng, rõ ràng, có thể kiểm chứng (chuyển quá nhanh liên tiếp, số tiền bất thường, thiết bị lạ) luôn chạy trước và có quyền quyết định thẳng an toàn/nguy hiểm. Chỉ những trường hợp rơi vào "vùng xám" — luật không đủ chắc chắn — mới được hỏi thêm AI để sinh ra lời giải thích giúp con người quyết định nhanh hơn.',
+ impl:'<b>Ở HPay:</b> <code>internal/fraud</code> + <code>internal/ai</code> (interface <code>Advisor</code>) — AI chỉ trả về text giải thích (<code>Complete()</code>), không có quyền gọi hàm chặn giao dịch.',
+ steps:['Giao dịch đi qua luật cứng: tính điểm rủi ro dựa trên tốc độ, số tiền, thiết bị...','Điểm rõ ràng an toàn hoặc rõ ràng nguy hiểm → quyết định ngay, KHÔNG gọi AI','Điểm ở vùng không chắc chắn → gọi AI sinh giải thích bằng ngôn ngữ tự nhiên','Đưa vào hàng chờ cho nhân viên — người (hoặc luật cứng) luôn là bên ra quyết định cuối cùng'],
+ mermaid:`flowchart TB
+  T["Giao dịch"] --> RULE["Luật cứng tính điểm rủi ro"]
+  RULE -->|"rõ ràng"| DEC["Quyết định ngay — KHÔNG cần AI"]
+  RULE -->|"vùng xám"| AI["Gọi AI: chỉ sinh lời giải thích"]
+  AI --> Q["Hàng chờ cho người duyệt"]
+  Q --> DEC2["Con người ra quyết định cuối"]`},
+
+{g:'ai', title:'AI tóm tắt đối soát', badge:'AI · Recon',
+ desc:'Sau khi so khớp tự động giữa dữ liệu nội bộ và sao kê ngân hàng, danh sách "lệch" thường khó đọc (nhiều mã giao dịch, số tiền lẻ). AI đọc qua danh sách lệch và viết một đoạn tóm tắt ngắn bằng ngôn ngữ tự nhiên về nguyên nhân có thể xảy ra, giúp nhân viên đối soát không phải tự dò từng dòng.',
+ impl:'<b>Ở HPay:</b> job đối soát (cron 00:15) dùng lại cùng <code>ai.Advisor</code> interface với KYC/fraud — cùng 1 cơ chế mock fallback khi thiếu API key.',
+ steps:['Job đối soát so khớp giao dịch nội bộ với sao kê (mock) theo mã tham chiếu','Sinh danh sách: khớp / lệch / thiếu','Gửi danh sách lệch cho AI, xin tóm tắt nguyên nhân có thể xảy ra','Hiển thị tóm tắt cùng bảng chi tiết, xuất Excel nếu cần'],
+ mermaid:`flowchart LR
+  M["So khớp giao dịch ↔ sao kê"] --> R["Danh sách lệch"]
+  R --> AI["AI tóm tắt nguyên nhân có thể"]
+  R --> X["Xuất Excel chi tiết"]
+  AI --> UI["Hiện cho nhân viên đối soát"]`},
+
+{g:'ai', title:'Kiến trúc AI 3 tầng + mock fallback', badge:'AI · Kiến trúc',
+ desc:'AI trong HPay được dùng ở 3 tầng hoàn toàn khác nhau, không nên gộp chung: (1) <b>lúc code</b> — các "skill" giúp AI hỗ trợ viết code đúng convention (scaffold module, sinh migration, checklist fintech-review); (2) <b>lúc chạy thật</b> — KYC/fraud/recon như trên; (3) <b>lúc CI/CD</b> — review pull request tự động theo checklist. Cả 3 tầng đều có đường lui khi không có API key (mock), để không bao giờ block được việc phát triển/test chỉ vì thiếu key.',
+ impl:'<b>Ở HPay:</b> <code>internal/ai.New(apiKey)</code> trả về <code>MockAdvisor</code> nếu key rỗng — dùng chung logic này cho cả 3 tầng runtime.',
+ steps:['Tầng dev: Claude Code skills hỗ trợ scaffold, viết migration, review theo checklist fintech','Tầng runtime: KYC scoring, fraud explain, recon summary — có thể chạy demo/CI mà không cần key thật','Tầng CI/CD: review pull request tự động theo checklist bảo mật tài chính','Không có API key ở bất kỳ tầng nào → tự động dùng bản mock xác định (deterministic), không rơi vào lỗi'],
+ mermaid:`flowchart TB
+  D["Tầng Dev\\nClaude Code skills"] --> COMMON["Cùng nguyên tắc: mock fallback"]
+  R["Tầng Runtime\\nKYC · Fraud · Recon"] --> COMMON
+  C["Tầng CI/CD\\nreview PR tự động"] --> COMMON
+  COMMON -->|"có API key"| REAL["Gọi AI thật"]
+  COMMON -->|"không có key"| MOCK["Dùng mock xác định, không lỗi"]`},
+
+{g:'craft', title:'sqlc — SQL được kiểm tra lỗi lúc biên dịch', badge:'Data layer',
+ desc:'Thay vì dùng ORM (viết code Go, ORM tự sinh SQL — dễ nhưng khó kiểm soát câu SQL cuối cùng, dễ sinh N+1 query), sqlc đi hướng ngược lại: viết SQL thuần trước, công cụ đọc SQL đó và <b>tự sinh code Go tương ứng</b> (struct + hàm gọi). Nếu SQL sai cột, sai kiểu dữ liệu — lỗi hiện ngay lúc build code, không phải lúc chạy production mới phát hiện.',
+ impl:'<b>Ở HPay:</b> <code>internal/store/queries/*.sql</code> → chạy <code>sqlc generate</code> → sinh ra <code>internal/store/gen/*.go</code> (không sửa tay các file này).',
+ steps:['Viết câu SQL thuần trong file .sql, đặt tên cho câu lệnh','Chạy sqlc generate','Công cụ đọc schema database + câu SQL, sinh ra struct Go khớp đúng kiểu dữ liệu từng cột','Nếu sau này đổi tên cột trong migration mà quên sửa câu SQL: build code sẽ báo lỗi ngay'],
+ mermaid:`flowchart LR
+  S[".sql — câu lệnh thuần"] --> G["sqlc generate"]
+  SCHEMA[("Schema DB thật")] --> G
+  G --> CODE["Code Go: struct + hàm gọi\\nkhớp đúng kiểu dữ liệu"]
+  CODE -.->|"SQL sai cột/kiểu"| ERR["Lỗi ngay lúc build, không phải lúc chạy"]`},
+
+{g:'craft', title:'golang-migrate — quản lý version schema', badge:'Data layer',
+ desc:'Mọi thay đổi cấu trúc database (thêm bảng, thêm cột, đổi kiểu dữ liệu...) được viết thành 1 cặp file <code>up</code> (áp dụng thay đổi) và <code>down</code> (undo thay đổi), đánh số thứ tự. Nhờ vậy, database ở máy dev, máy CI, và production luôn có thể đưa về đúng cùng 1 trạng thái, và có thể lùi lại nếu 1 bản thay đổi có vấn đề.',
+ impl:'<b>Ở HPay:</b> <code>db/migrations/000N_ten.up.sql</code>/<code>.down.sql</code>; CI chạy up → down → up trên database sạch để đảm bảo mọi thay đổi thực sự lùi lại được.',
+ steps:['Viết file up.sql (thay đổi mới) và down.sql (undo đúng thay đổi đó)','Chạy migrate up trên database — áp dụng theo đúng thứ tự số','CI tự động chạy up → down → up trên DB sạch — nếu down không lùi lại đúng, build fail ngay từ khi review'],
+ mermaid:`flowchart LR
+  U["000N.up.sql"] --> A["Áp dụng lên DB"]
+  A --> D["000N.down.sql"] --> B["Undo đúng thay đổi đó"]
+  B --> U2["Áp dụng lại (up)"]
+  U2 --> OK["CI: up→down→up phải chạy sạch mới cho merge"]`},
+
+{g:'craft', title:'Testcontainers — test với Postgres/Redis thật', badge:'Testing',
+ desc:'Thay vì giả lập (mock) database trong bài test — cách dễ viết nhưng dễ "test giả": test pass mà logic SQL/transaction thật lại sai — bộ test tích hợp của HPay khởi động Postgres và Redis <b>thật</b> (qua Docker) cho mỗi lần chạy test, đảm bảo test đang kiểm tra đúng hành vi thật của database, kể cả các ràng buộc (unique constraint, lock, transaction) mà mock không thể mô phỏng đúng.',
+ impl:'<b>Ở HPay:</b> <code>test/integration/</code> — mỗi test dùng pool kết nối tới Postgres/Redis thật, có helper dọn dữ liệu giữa các lần chạy.',
+ steps:['CI/máy dev khởi động container Postgres + Redis thật trước khi test','Test tạo dữ liệu thật, gọi đúng hàm service như production','Kiểm tra kết quả thật trong database (không phải giá trị mock giả định)','Sau mỗi test, dọn/rollback dữ liệu để test sau không bị ảnh hưởng'],
+ mermaid:`flowchart LR
+  T["Bắt đầu chạy test"] --> C["Khởi động Postgres + Redis thật (Docker)"]
+  C --> R["Test gọi service thật, ghi dữ liệu thật"]
+  R --> V["Kiểm tra kết quả trong DB thật"]
+  V --> CL["Dọn dữ liệu, sẵn sàng cho test tiếp theo"]`},
+
+{g:'craft', title:'Kiểm thử theo mã tình huống biên (edge case ID)', badge:'Testing',
+ desc:'Thay vì chỉ test "đường vui" (happy path), nhóm phát triển liệt kê trước danh sách các tình huống dễ gây lỗi trong hệ thống tài chính (2 người cùng bấm duyệt 1 lúc, worker chết giữa chừng, mạng lag khiến bấm gửi 2 lần, checker level đổi giữa lúc đang ký...) — mỗi tình huống có 1 mã (E01, E02...) và bắt buộc phải có 1 bài test tên đúng mã đó. CI đếm số mã có test, thiếu mã nào thì build fail.',
+ impl:'<b>Ở HPay:</b> <code>scripts/check-edge-tests.sh</code> quét toàn bộ <code>TestEdge_*</code>, đối chiếu với danh sách mã bắt buộc.',
+ steps:['Liệt kê trước các tình huống rủi ro cao (đặt mã E01, E02...)','Viết 1 test tên TestEdge_E08_... cho từng mã, mô phỏng đúng tình huống đó (vd: 2 goroutine cùng gọi duyệt song song)','CI chạy script quét, đối chiếu danh sách mã bắt buộc với các test đã có','Thiếu 1 mã nào → build fail, không merge được'],
+ mermaid:`flowchart LR
+  L["Danh sách rủi ro đã biết\\n(E01...E20)"] --> T["Mỗi mã → 1 TestEdge_* "]
+  T --> CI["CI quét toàn bộ test"]
+  CI --> C{"Đủ mã chưa?"}
+  C -->|"đủ"| OK["Build pass"]
+  C -->|"thiếu"| FAIL["Build fail — chỉ ra mã còn thiếu"]`},
+
+{g:'craft', title:'openapi.yaml — nguồn sự thật duy nhất của API', badge:'API contract',
+ desc:'Toàn bộ API được mô tả trong 1 file đặc tả (OpenAPI/Swagger) — endpoint nào, nhận gì, trả gì, mã lỗi nào. Backend, mobile, admin đều phải khớp với file này thay vì để mỗi phía tự hiểu API theo cách riêng. Một script tự động so khớp danh sách route thật trong code Go với danh sách khai báo trong file — lệch là báo lỗi ngay, tránh tài liệu "nói dối".',
+ impl:'<b>Ở HPay:</b> <code>api/openapi.yaml</code> + <code>scripts/check-openapi-sync.py</code>; mobile dùng openapi-typescript sinh type tự động từ đúng file này.',
+ steps:['Thêm/sửa 1 route trong router.go','Cập nhật đúng route đó trong openapi.yaml (kèm mã lỗi ERR_* nếu có)','Chạy script kiểm tra đồng bộ — đối chiếu route thật với route khai báo','Sinh lại TypeScript type cho mobile/admin từ file openapi.yaml mới nhất'],
+ mermaid:`flowchart LR
+  R["router.go\\n(route thật)"] --> CHK["check-openapi-sync.py"]
+  Y["openapi.yaml\\n(route khai báo)"] --> CHK
+  CHK -->|"khớp"| OK["Pass"]
+  CHK -->|"lệch"| FAIL["Báo lỗi route thiếu/thừa"]
+  Y --> GEN["openapi-typescript"] --> TS["Type TypeScript cho mobile/admin"]`},
+
+{g:'craft', title:'Kiến trúc frontend: Expo Router + TanStack Query/Table', badge:'Frontend',
+ desc:'Mobile app dùng <b>Expo Router</b> — cấu trúc thư mục file quyết định luôn route của app (không cần khai báo router thủ công). Cả mobile lẫn admin dùng <b>TanStack Query</b> để quản lý dữ liệu lấy từ server (tự cache, tự load lại khi cần) thay vì tự tay quản lý loading/error/refetch bằng useState. Admin web dùng thêm <b>TanStack Table</b> cho các bảng dữ liệu lớn có phân trang phía server.',
+ impl:'<b>Ở HPay:</b> hpay-mobile <code>app/(main)/...</code> = route; mỗi tính năng có 1 file <code>useXQueries.ts</code> gọi API đã sinh type từ openapi.yaml.',
+ steps:['Tạo 1 file mới trong thư mục app/ → tự động thành 1 màn hình/route mới','Viết 1 hook TanStack Query gọi API, khai rõ khi nào cần load lại (invalidate) dữ liệu','Màn hình chỉ cần gọi hook, không tự quản lý loading/error thủ công','Với bảng dữ liệu admin: TanStack Table xử lý phân trang, để server trả đúng 1 trang dữ liệu thay vì tải hết về'],
+ mermaid:`flowchart LR
+  F["File trong app/"] --> R["Tự động thành 1 route"]
+  H["useXQueries.ts"] --> Q["TanStack Query: cache + tự load lại"]
+  R --> H
+  A["Admin: bảng dữ liệu lớn"] --> TT["TanStack Table + phân trang server"]`},
+];
+
+document.documentElement.dataset.theme = document.documentElement.dataset.theme || '';
+
+function initTheme(){
+  try{
+    const saved = localStorage.getItem('hpay-guide-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+}
+initTheme();
+
+function renderNav(){
+  const nav = document.getElementById('rolenav');
+  nav.innerHTML = GROUPS.map(g=>`<a href="#${g.id}">${g.title.replace(/^[^ ]+ /,'')}</a>`).join('');
+}
+
+function renderSections(){
+  const root = document.getElementById('sections');
+  root.innerHTML = GROUPS.map(g=>{
+    const items = FEATURES.filter(f=>f.g===g.id);
+    const cards = items.map((f,i)=>`
+      <button class="card" data-idx="${FEATURES.indexOf(f)}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span class="badge">${f.badge}</span>
+        <span class="title">${f.title}</span>
+        <span class="sub">${f.desc.slice(0,90).replace(/<[^>]+>/g,'')}…</span>
+      </button>`).join('');
+    return `<section class="role ${g.cls}" id="${g.id}">
+      <div class="role-head"><h2>${g.title}</h2><span class="role-tag">${g.tag}</span></div>
+      <p class="role-desc">${g.desc}</p>
+      <div class="cards">${cards}</div>
+    </section>`;
+  }).join('');
+
+  root.querySelectorAll('.card').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.idx,10)));
+  });
+}
+
+const diagramCache = {};
+async function openModal(idx){
+  const f = FEATURES[idx];
+  const overlay = document.getElementById('overlay');
+  document.getElementById('m-badge').textContent = f.badge;
+  document.getElementById('m-badge').style.background = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).background;
+  document.getElementById('m-badge').style.color = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).color;
+  document.getElementById('m-title').innerHTML = f.title;
+  document.getElementById('m-desc').innerHTML = f.desc;
+  document.getElementById('m-impl').innerHTML = f.impl;
+  document.getElementById('m-steps').innerHTML = f.steps.map((s,i)=>`<li><span class="dot">${i+1}</span><span class="txt">${s}</span></li>`).join('');
+  const dbox = document.getElementById('m-diagram');
+  dbox.innerHTML = '<span class="loading">Đang dựng sơ đồ…</span>';
+  overlay.classList.add('open');
+
+  if(diagramCache[idx]){
+    dbox.innerHTML = diagramCache[idx];
+  } else {
+    try{
+      const themeAttr = document.documentElement.getAttribute('data-theme');
+      const isDark = themeAttr ? themeAttr === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      mermaid.initialize({startOnLoad:false, theme: isDark ? 'dark' : 'neutral', flowchart:{curve:'basis'}, themeVariables:{fontSize:'13px'}});
+      const {svg} = await mermaid.render('dg-'+idx+'-'+Date.now(), f.mermaid);
+      diagramCache[idx] = svg;
+      dbox.innerHTML = svg;
+    }catch(e){
+      dbox.innerHTML = '<span class="loading">Không dựng được sơ đồ.</span>';
+    }
+  }
+}
+
+document.getElementById('m-close').addEventListener('click', ()=>{
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') document.getElementById('overlay').classList.remove('open');
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') document.getElementById('overlay').classList.remove('open');
+});
+
+renderNav();
+renderSections();
+</script>
+</body>
+</html>

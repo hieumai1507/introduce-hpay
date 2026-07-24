@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HPay — Tổng quan chức năng theo vai trò</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --paper:#F4F5F2; --surface:#FFFFFF; --surface-2:#FBFBF9;
+  --ink:#151A17; --ink-2:#4B534D; --ink-3:#7C837D;
+  --line:#DFE1DB; --line-soft:#ECEDE9;
+  --brand:#0F5C4E; --brand-ink:#0A3E34; --brand-tint:#E4F1EC;
+  --business:#9A4A22; --business-ink:#6E3417; --business-tint:#F7EBE1;
+  --admin:#33527D; --admin-ink:#23395A; --admin-tint:#E7ECF4;
+  --platform:#5C4A8C; --platform-ink:#3E3161; --platform-tint:#EEEBF7;
+  --ok:#1D7A4C; --warn:#A66A0E; --bad:#B23A3A;
+  --font-head:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Times New Roman',serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,SFMono-Regular,'Cascadia Code',Consolas,monospace;
+  --radius:10px;
+}
+:root[data-theme="dark"]{
+  --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+  --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+  --line:#31363B; --line-soft:#282C31;
+  --brand:#4FC9A8; --brand-ink:#8FE0C7; --brand-tint:#173029;
+  --business:#E1935E; --business-ink:#F0BE95; --business-tint:#33241A;
+  --admin:#8FADDA; --admin-ink:#BBCFEF; --admin-tint:#1D2A3E;
+  --platform:#B6A6E8; --platform-ink:#D2C6F4; --platform-tint:#251F3A;
+  --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#14171A; --surface:#1B1F23; --surface-2:#20242A;
+    --ink:#ECEEEA; --ink-2:#B7BCB7; --ink-3:#8A9089;
+    --line:#31363B; --line-soft:#282C31;
+    --brand:#4FC9A8; --brand-ink:#8FE0C7; --brand-tint:#173029;
+    --business:#E1935E; --business-ink:#F0BE95; --business-tint:#33241A;
+    --admin:#8FADDA; --admin-ink:#BBCFEF; --admin-tint:#1D2A3E;
+    --platform:#B6A6E8; --platform-ink:#D2C6F4; --platform-tint:#251F3A;
+    --ok:#4CAE7D; --warn:#D6A64C; --bad:#E27575;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);line-height:1.6;font-size:15.5px}
+.wrap{max-width:1120px;margin:0 auto;padding:36px 24px 120px}
+a{color:var(--brand)}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;text-wrap:balance;color:var(--ink);margin:0}
+
+header.top{display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+header.top h1{font-size:34px;letter-spacing:-.01em}
+header.top .lede{max-width:720px;color:var(--ink-2);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+.langbar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-3)}
+.langbar a{font-weight:600;text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
+.langbar a.current{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+nav.rolenav{position:sticky;top:0;background:var(--paper);z-index:20;padding:14px 0;margin:0 0 28px;border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+nav.rolenav a{text-decoration:none;font-size:13.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface)}
+nav.rolenav a:hover{border-color:var(--ink-3)}
+
+section.role{margin:56px 0}
+.role-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.role-head h2{font-size:24px}
+.role-tag{font-size:11.5px;font-weight:700;letter-spacing:.03em;padding:3px 10px;border-radius:99px}
+.role-desc{color:var(--ink-2);max-width:760px;margin:8px 0 22px;font-size:15px}
+
+.g-personal .role-tag{background:var(--brand-tint);color:var(--brand-ink)}
+.g-business .role-tag{background:var(--business-tint);color:var(--business-ink)}
+.g-admin .role-tag{background:var(--admin-tint);color:var(--admin-ink)}
+.g-platform .role-tag{background:var(--platform-tint);color:var(--platform-ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{
+  text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px;cursor:pointer;font-family:var(--font-body);color:var(--ink);
+  display:flex;flex-direction:column;gap:6px;transition:border-color .12s ease,transform .12s ease;
+}
+.card:hover{border-color:var(--ink-3)}
+.card:active{transform:scale(0.99)}
+.card .num{font-family:var(--font-mono);font-size:11px;color:var(--ink-3)}
+.card .title{font-weight:600;font-size:15px;line-height:1.35}
+.card .sub{font-size:13px;color:var(--ink-2);line-height:1.45}
+.card .badge{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:5px;margin-top:2px}
+.g-personal .card .badge{background:var(--brand-tint);color:var(--brand-ink)}
+.g-business .card .badge{background:var(--business-tint);color:var(--business-ink)}
+.g-admin .card .badge{background:var(--admin-tint);color:var(--admin-ink)}
+.g-platform .card .badge{background:var(--platform-tint);color:var(--platform-ink)}
+
+.overlay{position:fixed;inset:0;background:rgba(10,12,10,.5);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;z-index:100;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;max-width:760px;width:100%;padding:0;box-shadow:0 24px 64px rgba(0,0,0,.28);margin-bottom:5vh}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:24px 26px 16px;border-bottom:1px solid var(--line-soft)}
+.modal-head .badge{font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px}
+.modal-head h3{font-size:21px;line-height:1.3}
+.modal-close{border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;flex:none}
+.modal-close:hover{color:var(--ink)}
+.modal-body{padding:20px 26px 26px;display:flex;flex-direction:column;gap:20px}
+.modal-body .desc{color:var(--ink-2);font-size:14.5px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;gap:12px;font-size:13.5px}
+.steps li .dot{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-2)}
+.steps li .txt{padding-top:2px;color:var(--ink)}
+.diagram-label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;margin-bottom:8px}
+.diagram-box{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:10px;padding:14px;overflow-x:auto}
+.diagram-box svg{max-width:100%;height:auto}
+.diagram-box .loading{font-size:13px;color:var(--ink-3);font-style:italic}
+
+footer{margin-top:70px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:640px){header.top h1{font-size:27px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="langbar">
+    <span>🌐</span>
+    <a href="functional-overview.vi.html" class="current">Tiếng Việt</a>
+    <a href="functional-overview.en.html">English</a>
+    <span style="margin-left:auto"></span>
+    <a href="technical-overview.vi.html">→ Xem bản kỹ thuật</a>
+  </div>
+  <div class="eyebrow">Tài liệu giới thiệu sản phẩm · dùng để thuyết trình</div>
+  <h1>HPay — hệ ví điện tử &amp; thanh toán doanh nghiệp</h1>
+  <p class="lede">HPay là một hệ thống ví điện tử end-to-end, xây dựng theo phong cách các ví Mỹ phổ biến (Venmo, Cash App, Revolut): chuyển tiền P2P tức thời, nhắc nợ &amp; chia hoá đơn, cộng thêm một <b>ví doanh nghiệp có cơ chế duyệt chi hai lớp (maker–checker)</b> — nơi một người tạo lệnh chi tiêu và một hoặc nhiều người khác phải ký duyệt trước khi tiền thực sự di chuyển. Toàn bộ tiền chảy qua một <b>cỗ máy xử lý luồng nghiệp vụ (workflow engine)</b> có thể cấu hình, đặt trên một <b>sổ cái kế toán kép (double-entry ledger)</b> không thể sửa/xoá.</p>
+  <div class="chips">
+    <span class="chip">3 vai trò cá nhân → doanh nghiệp → vận hành</span>
+    <span class="chip">Mobile app (Expo/React Native)</span>
+    <span class="chip">Admin web (React)</span>
+    <span class="chip">Backend Go</span>
+  </div>
+</header>
+
+<nav class="rolenav" id="rolenav"></nav>
+
+<div id="sections"></div>
+
+<footer>
+  <span>HPay · tài liệu chức năng · nhấn vào từng ô để xem chi tiết + sơ đồ luồng</span>
+  <span>Bản kỹ thuật (khái niệm ACID, workflow engine, AI…) → <a href="technical-overview.vi.html">technical-overview.vi.html</a></span>
+</footer>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <span class="badge" id="m-badge"></span>
+        <h3 id="m-title"></h3>
+      </div>
+      <button class="modal-close" id="m-close" aria-label="Đóng">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="desc" id="m-desc"></p>
+      <div>
+        <div class="diagram-label">Các bước chính</div>
+        <ol class="steps" id="m-steps"></ol>
+      </div>
+      <div>
+        <div class="diagram-label">Sơ đồ luồng</div>
+        <div class="diagram-box" id="m-diagram"><span class="loading">Đang dựng sơ đồ…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  {id:'personal', cls:'g-personal', tag:'NGƯỜI DÙNG CÁ NHÂN', title:'👤 Người dùng cá nhân — Mobile app',
+   desc:'Bất kỳ ai tải app, đăng ký bằng số điện thoại. Có một ví cá nhân dùng cho mọi nhu cầu tiền hằng ngày: nạp tiền, chuyển cho bạn bè, nhắc nợ, để dành.'},
+  {id:'business', cls:'g-business', tag:'VÍ DOANH NGHIỆP', title:'🏢 Ví doanh nghiệp — Maker &amp; Checker',
+   desc:'Một tổ chức (công ty, cửa hàng, nhóm...) mở ví doanh nghiệp trong app. Có 2 vai trò tách biệt bắt buộc: <b>Maker</b> — người đề xuất/tạo lệnh chi, và <b>Checker</b> — người có quyền ký duyệt trước khi tiền đi. Một tổ chức có thể có nhiều checker theo nhiều cấp (level).'},
+  {id:'admin', cls:'g-admin', tag:'VẬN HÀNH', title:'🛡️ Đội vận hành — Admin web',
+   desc:'Nhân sự nội bộ HPay (không phải khách hàng) dùng trang web quản trị riêng để giám sát toàn hệ thống: duyệt hồ sơ định danh, theo dõi gian lận, xử lý sự cố luồng xử lý, đối soát tiền, và tự họ cũng phải qua cơ chế duyệt hai lớp khi làm việc nhạy cảm (hoàn tiền, khoá tài khoản).'},
+  {id:'platform', cls:'g-platform', tag:'CHẠY NỀN', title:'⚙️ Hạ tầng chạy nền — không thuộc riêng ai',
+   desc:'Những cơ chế chạy phía sau mọi thao tác ở trên, người dùng không thấy trực tiếp nhưng chính là thứ khiến HPay đáng tin cậy: chống gian lận, chống mất tiền khi lỗi mạng, tự phục hồi khi có sự cố.'},
+];
+
+const FEATURES = [
+{g:'personal', title:'Đăng ký &amp; đăng nhập', badge:'Onboarding',
+ desc:'Đăng ký bằng số điện thoại + mật khẩu. Phiên đăng nhập dùng cặp access/refresh token tự xoay vòng — nếu một refresh token bị đánh cắp và dùng lại, toàn bộ phiên trên mọi thiết bị bị thu hồi ngay lập tức. Lần sau, có thể mở khoá app nhanh bằng Face ID/vân tay.',
+ steps:['Nhập số điện thoại + mật khẩu','Hệ thống cấp access token (ngắn hạn) + refresh token (dài hạn)','App tự làm mới access token khi hết hạn, không bắt đăng nhập lại','Lần mở app sau: Face ID/vân tay mở khoá nhanh — nhưng KHÔNG thay được PIN khi chuyển tiền'],
+ mermaid:`flowchart LR
+  U["Người dùng"] -->|"SĐT + mật khẩu"| API["API đăng nhập"]
+  API --> TK["Cấp access + refresh token"]
+  TK --> APP["App lưu phiên"]
+  APP -->|"lần mở sau"| FID["Face ID / vân tay"]
+  FID --> APP2["Mở khoá app nhanh"]
+  APP2 -.->|"chuyển tiền vẫn cần"| PIN["Nhập PIN/OTP riêng"]`},
+
+{g:'personal', title:'Xác minh danh tính (KYC)', badge:'KYC',
+ desc:'Chụp ảnh CCCD/CMND + ảnh selfie. Một AI đọc ảnh và chấm điểm độ tin cậy tự động — điểm cao thì duyệt ngay, điểm ở mức không chắc chắn thì chuyển cho nhân viên vận hành xem lại (kèm giải thích của AI), điểm quá thấp thì từ chối. Xác minh xong, hạn mức giao dịch mỗi ngày sẽ tăng lên.',
+ steps:['Chụp ảnh giấy tờ tuỳ thân','Chụp ảnh selfie đối chiếu khuôn mặt','AI (Claude vision) trả về điểm tin cậy + lý do','Điểm cao → tự động duyệt · điểm giữa → người xét duyệt xem lại · điểm thấp → từ chối','Duyệt xong: hạn mức giao dịch/ngày được nâng theo cấp KYC'],
+ mermaid:`flowchart LR
+  A["Chụp CCCD + selfie"] --> B["AI chấm điểm\\n(score + lý do)"]
+  B -->|"điểm cao"| C["✅ Tự động duyệt"]
+  B -->|"điểm giữa"| D["🧑 Nhân viên xét duyệt\\n(thấy giải thích AI)"]
+  B -->|"điểm thấp"| E["❌ Từ chối"]
+  C --> F["Hạn mức giao dịch/ngày tăng"]
+  D -->|"duyệt"| F`},
+
+{g:'personal', title:'Nạp tiền vào ví', badge:'Topup',
+ desc:'Nạp tiền từ ngân hàng (mô phỏng trong bản demo) kèm xác thực OTP. Thao tác này an toàn khi bấm lại nhiều lần — hệ thống không bao giờ cộng tiền hai lần cho cùng một lần nạp.',
+ steps:['Chọn số tiền cần nạp','Xác thực bằng OTP gửi về điện thoại','Ngân hàng xác nhận (mock) → tiền vào ví ngay','Nếu app bị treo/mất mạng giữa chừng và người dùng bấm lại: hệ thống nhận ra đây là cùng 1 yêu cầu, không nạp trùng'],
+ mermaid:`flowchart LR
+  U["Chọn số tiền"] --> OTP["Xác thực OTP"]
+  OTP --> BANK["Ngân hàng xác nhận (mock)"]
+  BANK --> LEDGER["Ghi sổ cái: cộng tiền vào ví"]
+  U -.->|"bấm lại do lo lắng"| ID["Idempotency key trùng"]
+  ID -.-> LEDGER`},
+
+{g:'personal', title:'Chuyển tiền P2P', badge:'Core',
+ desc:'Chuyển tiền tức thời cho người dùng khác qua số điện thoại. Trước khi xác nhận, app hiện rõ phí (nếu có). Sau khi gửi, có màn hình theo dõi tiến trình theo thời gian thực thay vì chỉ hiện "thành công"/"thất bại" — vì phía sau là cả một chuỗi bước xử lý.',
+ steps:['Nhập số điện thoại người nhận + số tiền','Xem trước phí giao dịch (nếu có)','Xác nhận bằng PIN','Giao dịch chạy qua workflow engine — có màn theo dõi trạng thái','Người nhận nhận tiền, cả 2 bên đều được thông báo'],
+ mermaid:`sequenceDiagram
+  actor U as Người gửi
+  participant BE as Backend
+  actor R as Người nhận
+  U->>BE: Nhập SĐT + số tiền, xem phí
+  U->>BE: Xác nhận bằng PIN
+  BE-->>U: Đang xử lý… (có màn theo dõi)
+  BE->>BE: Kiểm tra gian lận, trừ tiền, cộng tiền
+  BE-->>U: 🔔 Đã chuyển thành công
+  BE-->>R: 🔔 Bạn vừa nhận được tiền`},
+
+{g:'personal', title:'Yêu cầu thanh toán &amp; Chia hoá đơn', badge:'Request Money',
+ desc:'Giống Venmo/MoMo: nhắc một người khác trả bạn một khoản tiền, có ghi chú lý do. "Chia hoá đơn" là tạo nhiều yêu cầu cùng lúc cho một nhóm người — có màn hình theo dõi trực quan (avatar người đã trả sáng rõ, người chưa trả mờ đi) kèm thanh tiến độ đã thu được bao nhiêu trên tổng số.',
+ steps:['Chọn người cần nhắc trả + số tiền + lý do','Gửi yêu cầu — người kia nhận thông báo, có hạn 72 giờ','Người kia bấm "Trả" → tiền chuyển đi giống một giao dịch P2P bình thường','Yêu cầu tự chuyển trạng thái "đã trả", người tạo được thông báo','Với nhóm nhiều người: xem thanh tiến độ + ai đã trả / ai còn thiếu, có thể "nhắc" người còn thiếu'],
+ mermaid:`sequenceDiagram
+  actor A as Người xin tiền
+  actor B as Người trả
+  participant BE as Backend
+  A->>BE: Tạo yêu cầu (số tiền, lý do, hạn 72h)
+  BE-->>B: 🔔 Nhắc thanh toán
+  B->>BE: Bấm "Trả" → chuyển tiền qua luồng P2P
+  BE-->>A: 🔔 "B đã trả bạn"
+  Note over A,B: Chia hoá đơn = nhiều yêu cầu cùng nhóm,<br/>màn theo dõi hiện % đã thu`},
+
+{g:'personal', title:'Nhận tiền qua QR', badge:'QR',
+ desc:'Tạo mã QR cá nhân để người khác quét chuyển tiền, không cần gõ số điện thoại. Mã QR có thể gắn sẵn số tiền cụ thể (ví dụ chủ quán tạo QR 50.000đ) để người trả chỉ cần quét và xác nhận.',
+ steps:['Mở màn QR của tôi','(Tuỳ chọn) nhập sẵn số tiền cần thu','Người trả quét mã bằng camera app','App điền sẵn thông tin người nhận (+ số tiền nếu có) → người trả chỉ cần xác nhận'],
+ mermaid:`flowchart LR
+  A["Chủ ví tạo QR"] -->|"gắn sẵn số tiền (tuỳ chọn)"| Q["Mã QR ký số"]
+  B["Người trả quét QR"] --> Q
+  Q --> F["Form chuyển tiền điền sẵn"]
+  F --> C["Xác nhận PIN → chuyển tiền"]`},
+
+{g:'personal', title:'Hũ tiết kiệm (Vaults) &amp; làm tròn tự động', badge:'Vaults',
+ desc:'Tạo các "hũ" tiết kiệm riêng cho từng mục tiêu (đi du lịch, mua đồ...), tiền vẫn nằm trong hệ thống của bạn nhưng tách khỏi ví chi tiêu hằng ngày. Có thể bật "làm tròn" — mỗi lần chuyển tiền, phần lẻ được tự động gom vào hũ tiết kiệm.',
+ steps:['Tạo hũ, đặt tên + mục tiêu số tiền (tuỳ chọn)','Bỏ tiền vào / rút tiền ra bất kỳ lúc nào — đều là 1 giao dịch có ghi sổ','Bật "làm tròn" cho hũ mong muốn','Mỗi lần chuyển tiền P2P sau đó: phần dư làm tròn tự động chuyển vào hũ'],
+ mermaid:`flowchart LR
+  V["Tạo hũ tiết kiệm"] --> ON["Bật làm tròn"]
+  P["Chuyển tiền P2P bất kỳ"] -->|"có bật làm tròn"| R["Tính phần dư làm tròn"]
+  R --> V2["Tự động cộng vào hũ"]
+  V -.-> D["Bỏ tiền / rút tiền thủ công"]`},
+
+{g:'personal', title:'Lịch sử &amp; dòng thời gian giao dịch', badge:'History',
+ desc:'Xem lại toàn bộ giao dịch đã thực hiện. Mỗi giao dịch có một dòng thời gian chi tiết từng bước xử lý (không chỉ "thành công/thất bại" mà cả các bước ở giữa), hữu ích khi cần tra soát. Số dư mặc định được ẩn để tránh lộ khi mở app ở nơi công cộng.',
+ steps:['Mở danh sách lịch sử, lọc theo thời gian/loại giao dịch','Bấm vào 1 giao dịch để xem chi tiết','Xem dòng thời gian: từng bước xử lý + thời điểm','Số dư ví mặc định ẩn, bấm để hiện tạm thời'],
+ mermaid:`flowchart LR
+  L["Danh sách lịch sử"] --> D["Chi tiết 1 giao dịch"]
+  D --> TL["Dòng thời gian từng bước xử lý"]
+  H["Trang chủ"] -.->|"mặc định ẩn"| BAL["Số dư"]
+  BAL -.->|"bấm để hiện"| BAL2["Hiện tạm thời"]`},
+
+{g:'business', title:'Tạo tổ chức &amp; mời thành viên', badge:'Maker · Admin org',
+ desc:'Người quản trị tổ chức tạo ví doanh nghiệp, mời thành viên vào bằng số điện thoại và gán vai trò: admin tổ chức, maker (người tạo lệnh chi), hoặc checker (người ký duyệt, có cấp độ level 1/2...).',
+ steps:['Tạo tổ chức, đặt tên','Mời thành viên bằng số điện thoại','Gán vai trò: admin / maker / checker + cấp level cho checker','Thành viên xuất hiện trong tổ chức với đúng quyền hạn'],
+ mermaid:`flowchart LR
+  A["Admin tổ chức"] --> C["Tạo tổ chức"]
+  C --> I["Mời thành viên (SĐT)"]
+  I --> R{"Gán vai trò"}
+  R -->|"maker"| M["Được tạo lệnh chi"]
+  R -->|"checker L1/L2..."| K["Được ký duyệt theo cấp"]`},
+
+{g:'business', title:'Thiết lập chính sách phê duyệt', badge:'Policy',
+ desc:'Định nghĩa quy tắc: lệnh chi trong khoảng tiền nào thì cần bao nhiêu chữ ký, ở cấp nào. Ví dụ: dưới 5 triệu chỉ cần 1 checker cấp 1; trên 5 triệu cần cả checker cấp 1 và cấp 2 cùng ký. Chính sách có thể sửa sau này, nhưng lệnh đang chờ duyệt sẽ giữ nguyên chính sách tại thời điểm nó được tạo.',
+ steps:['Đặt tên chính sách, khoảng số tiền áp dụng','Định nghĩa từng "tier": cấp checker nào, cần bao nhiêu chữ ký','Lưu chính sách — có version, chính sách cũ vẫn giữ hiệu lực cho các lệnh đang treo'],
+ mermaid:`flowchart TB
+  P["Chính sách phê duyệt"] --> T1["Tier 1: dưới 5tr → 1 chữ ký L1"]
+  P --> T2["Tier 2: trên 5tr → 1 chữ ký L1 + 1 chữ ký L2"]
+  P -->|"admin sửa chính sách"| P2["Version mới"]
+  P2 -.->|"không ảnh hưởng"| OLD["Lệnh đang chờ duyệt vẫn theo chính sách cũ"]`},
+
+{g:'business', title:'Tạo lệnh chi', badge:'Maker',
+ desc:'Maker tạo một lệnh chi tiền cho người nhận, kèm lý do. Lệnh không chuyển tiền ngay — nó dừng lại chờ đủ chữ ký theo đúng chính sách đã thiết lập cho khoảng tiền đó.',
+ steps:['Chọn người nhận + số tiền + lý do chi','Hệ thống tự tra chính sách phù hợp với số tiền này','Lệnh được tạo, trạng thái "chờ duyệt", checker liên quan nhận được thông báo','Maker theo dõi tiến độ ký duyệt ở màn "Trạng thái lệnh"'],
+ mermaid:`flowchart LR
+  M["Maker tạo lệnh chi"] --> POL["Tra chính sách theo số tiền"]
+  POL --> W["Lệnh dừng chờ duyệt (WAIT_APPROVAL)"]
+  W --> N["Thông báo cho checker liên quan"]`},
+
+{g:'business', title:'Theo dõi trạng thái lệnh chi', badge:'Maker',
+ desc:'Sau khi tạo lệnh, maker có một màn hình dạng dòng thời gian: đã tạo lệnh → checker nào đã ký → đang chờ ai → tiền đã chuyển xong. Không phải đoán mò lệnh đang ở đâu.',
+ steps:['Mở màn "Trạng thái lệnh" ngay sau khi tạo','Xem từng mốc: tạo lệnh → chữ ký cấp 1 → chữ ký cấp 2 → chuyển tiền','Mỗi mốc có thời gian cụ thể và tên người đã ký','Khi đủ chữ ký: tiền tự động chuyển, không cần thao tác thêm'],
+ mermaid:`flowchart TB
+  S1["✅ Bạn đã tạo lệnh"] --> S2["✅ Level 1 đã ký"]
+  S2 --> S3["🔵 Level 2 — đang chờ ký"]
+  S3 --> S4["⚪ Thực hiện chuyển tiền"]`},
+
+{g:'business', title:'Hủy lệnh đang chờ duyệt', badge:'Maker',
+ desc:'Nếu lệnh chưa được ai ký (hoặc mới ký một phần), maker tạo ra lệnh có quyền tự huỷ — ví dụ tạo nhầm số tiền. Không huỷ được nếu lệnh đã duyệt xong, bị từ chối, hoặc đã hết hạn.',
+ steps:['Vào màn trạng thái lệnh đang "chờ duyệt"','Bấm "Hủy lệnh", xác nhận lại vì không thể hoàn tác','Lệnh chuyển sang trạng thái "đã hủy" — không ai ký được nữa'],
+ mermaid:`flowchart LR
+  M["Maker mở lệnh đang chờ duyệt"] --> H["Bấm Hủy lệnh"]
+  H --> C{"Xác nhận?"}
+  C -->|"có"| X["Lệnh → đã hủy, không thể ký nữa"]
+  C -->|"không"| M`},
+
+{g:'business', title:'Hộp thư chờ duyệt (My Tasks)', badge:'Checker',
+ desc:'Checker có một danh sách các lệnh đang cần chính mình ký — chỉ hiện lệnh đúng cấp độ (level) của họ và đúng lượt (nếu lệnh cần cả level 1 và 2, level 2 chỉ hiện lên sau khi level 1 đã ký xong).',
+ steps:['Mở hộp thư "Chờ tôi duyệt"','Danh sách chỉ hiện lệnh đúng cấp của checker này, còn hạn','Bấm vào 1 lệnh để xem chi tiết trước khi quyết định'],
+ mermaid:`flowchart LR
+  Q["Tất cả lệnh chờ duyệt"] --> F{"Đúng level của checker\\nvà đến lượt chưa?"}
+  F -->|"đúng"| I["Hiện trong hộp thư của tôi"]
+  F -->|"chưa đến lượt"| N["Chưa hiện"]`},
+
+{g:'business', title:'Xem chi tiết lệnh + lịch sử chữ ký', badge:'Checker',
+ desc:'Trước khi ký, checker xem đầy đủ: số tiền, người tạo lệnh, lý do, và danh sách những ai đã ký trước đó kèm thời điểm — để biết chắc mình đang ký đúng lệnh, không phải ký "mù".',
+ steps:['Mở 1 lệnh từ hộp thư','Xem số tiền, người tạo (maker), lý do chi','Xem mục "Chữ ký": ai đã ký ở cấp nào, lúc mấy giờ'],
+ mermaid:`flowchart TB
+  D["Chi tiết lệnh"] --> M["Số tiền · Maker · Lý do"]
+  D --> S["Danh sách chữ ký đã có"]
+  S --> S1["Level 1 — Trần Quang — 09:26"]`},
+
+{g:'business', title:'Ký duyệt / từ chối bằng OTP', badge:'Checker',
+ desc:'Ký duyệt hoặc từ chối một lệnh chi đòi hỏi nhập mã OTP gửi riêng cho checker đó — biến chữ ký thành hành động không thể chối bỏ sau này (chính checker đó đã đồng ý, không phải ai khác bấm hộ).',
+ steps:['Bấm "Duyệt" hoặc "Từ chối"','Hệ thống gửi mã OTP về điện thoại checker','Nhập đúng OTP để xác nhận chữ ký','Nếu là chữ ký cuối cùng cần thiết: tiền chuyển ngay; nếu chưa: lệnh tiếp tục chờ người tiếp theo'],
+ mermaid:`sequenceDiagram
+  actor C as Checker
+  participant BE as Backend
+  C->>BE: Bấm Duyệt / Từ chối
+  BE-->>C: Gửi mã OTP
+  C->>BE: Nhập OTP xác nhận
+  alt đủ chữ ký theo chính sách
+    BE->>BE: Thực hiện chuyển tiền ngay
+  else còn thiếu chữ ký
+    BE->>BE: Chuyển lượt cho checker cấp tiếp theo
+  end`},
+
+{g:'business', title:'Kết quả sau khi ký', badge:'Checker',
+ desc:'Sau khi ký, checker thấy ngay kết quả rõ ràng: nếu là chữ ký cuối cùng → "Đã duyệt, đang thực hiện chuyển tiền"; nếu còn thiếu người → "đã ghi nhận, còn chờ N người nữa". Trường hợp hiếm gặp: 2 checker cùng bấm duyệt gần như đồng thời — người đến sau sẽ thấy màn báo "lệnh này vừa được xử lý xong bởi người khác" thay vì báo lỗi khó hiểu.',
+ steps:['Ký xong → xem kết quả ngay trên màn hình','Là chữ ký cuối: thấy trạng thái "đang xử lý chuyển tiền"','Chưa đủ chữ ký: thấy "còn chờ N người nữa"','Nếu người khác vừa ký trước bạn vài giây: màn hình báo rõ ràng, không phải lỗi'],
+ mermaid:`flowchart LR
+  K["Vừa ký xong"] --> R{"Kết quả từ server"}
+  R -->|"đủ chữ ký"| A["✅ Đã duyệt — đang chuyển tiền"]
+  R -->|"còn thiếu"| B["🕒 Còn chờ N người nữa"]
+  R -->|"người khác ký trước"| C["🤝 Lệnh đã được xử lý xong"]`},
+
+{g:'admin', title:'Dashboard tổng quan', badge:'Ops',
+ desc:'Trang chủ của đội vận hành: các chỉ số quan trọng trong ngày (số giao dịch, số hồ sơ KYC chờ duyệt, số cảnh báo gian lận...) và khu vực "cần chú ý ngay" để không bỏ sót việc gấp.',
+ steps:['Mở trang quản trị','Xem các chỉ số KPI trong ngày','Xem khu vực "cần chú ý" để biết việc ưu tiên'],
+ mermaid:`flowchart LR
+  D["Dashboard"] --> K["Chỉ số KPI hôm nay"]
+  D --> A["Khu vực cần chú ý ngay"]
+  A --> L["Điều hướng nhanh tới hàng chờ liên quan"]`},
+
+{g:'admin', title:'Hàng chờ duyệt hồ sơ KYC', badge:'Ops',
+ desc:'Danh sách hồ sơ định danh ở mức điểm không đủ để tự động duyệt — nhân viên xem ảnh CCCD/selfie cùng giải thích của AI, rồi tự quyết duyệt hay từ chối. Có phím tắt bàn phím để duyệt nhanh hàng loạt.',
+ steps:['Mở hàng chờ KYC','Xem ảnh giấy tờ + ảnh selfie + điểm và lý do AI đưa ra','Quyết định duyệt hoặc từ chối (có phím tắt bàn phím)'],
+ mermaid:`flowchart LR
+  Q["Hàng chờ KYC"] --> V["Xem ảnh + điểm AI + lý do"]
+  V --> D{"Quyết định"}
+  D -->|"duyệt"| OK["Người dùng lên hạn mức mới"]
+  D -->|"từ chối"| NO["Người dùng nhận thông báo, có thể nộp lại"]`},
+
+{g:'admin', title:'Giám sát gian lận', badge:'Ops',
+ desc:'Danh sách các giao dịch bị hệ thống gắn cờ nghi ngờ gian lận (chuyển nhanh liên tiếp, số tiền bất thường, thiết bị lạ...), kèm giải thích bằng ngôn ngữ tự nhiên do AI tổng hợp để nhân viên hiểu nhanh vì sao bị gắn cờ, có hạn xử lý.',
+ steps:['Mở danh sách cảnh báo gian lận','Xem lý do bị gắn cờ (luật cứng + giải thích AI)','Xử lý: xác nhận là gian lận hoặc bỏ qua cảnh báo'],
+ mermaid:`flowchart LR
+  T["Giao dịch"] --> R["Luật cứng: tốc độ, số tiền, thiết bị lạ..."]
+  R -->|"vùng nghi ngờ"| AI["AI giải thích thêm bằng tiếng Việt"]
+  AI --> Q["Vào hàng chờ cho nhân viên xử lý"]
+  Q --> H["Nhân viên: xác nhận gian lận / bỏ qua"]`},
+
+{g:'admin', title:'Giám sát luồng xử lý (Workflow Monitor)', badge:'Ops',
+ desc:'Mọi giao dịch chạy qua nhiều bước xử lý phía sau; màn này cho vận hành thấy những giao dịch đang "kẹt" hoặc lỗi giữa chừng, lọc theo trạng thái/loại giao dịch, để can thiệp kịp thời thay vì để khách hàng chờ vô thời hạn.',
+ steps:['Mở màn giám sát luồng xử lý','Lọc theo trạng thái (đang chạy / lỗi / kẹt quá lâu) hoặc loại giao dịch','Xem chi tiết 1 luồng đang kẹt để biết đang dừng ở bước nào'],
+ mermaid:`flowchart LR
+  M["Workflow Monitor"] --> F["Lọc: trạng thái · loại · kẹt >5 phút"]
+  F --> D["Xem chi tiết 1 instance"]
+  D --> S["Đang dừng ở bước nào, vì sao"]`},
+
+{g:'admin', title:'Đối soát giao dịch hằng ngày', badge:'Ops',
+ desc:'Mỗi đêm, hệ thống tự so khớp giao dịch nội bộ với sao kê ngân hàng (mô phỏng) — cái nào khớp, cái nào lệch, cái nào thiếu ở phía nào. AI tóm tắt nguyên nhân lệch bằng ngôn ngữ dễ hiểu, và có thể xuất ra file Excel.',
+ steps:['Chạy đối soát (tự động lúc 00:15 hoặc bấm tay)','Xem danh sách: khớp / lệch / thiếu','Đọc tóm tắt nguyên nhân lệch do AI viết','Xuất báo cáo Excel nếu cần'],
+ mermaid:`flowchart LR
+  C["Cron 00:15"] --> M["So khớp theo mã giao dịch\\nvới sao kê ngân hàng"]
+  M --> R["Khớp / Lệch / Thiếu"]
+  R --> AI["AI tóm tắt nguyên nhân lệch"]
+  R --> X["Xuất Excel"]`},
+
+{g:'admin', title:'My Tasks của Admin', badge:'Ops',
+ desc:'Không chỉ lệnh chi doanh nghiệp mới cần duyệt hai lớp — những thao tác nhạy cảm của chính đội vận hành (hoàn tiền một giao dịch, khoá tài khoản người dùng, đổi chính sách phí) cũng phải qua một admin khác ký duyệt, dùng đúng cơ chế maker-checker.',
+ steps:['Một admin đề xuất thao tác nhạy cảm (vd: hoàn tiền)','Thao tác vào hàng chờ "My Tasks" của admin khác','Admin thứ hai xem lý do, duyệt hoặc từ chối','Duyệt xong: thao tác mới thực sự được thi hành'],
+ mermaid:`flowchart LR
+  A1["Admin A đề xuất\\n(hoàn tiền / khoá TK / đổi policy)"] --> Q["My Tasks"]
+  Q --> A2["Admin B xem xét"]
+  A2 -->|"duyệt"| DO["Thao tác được thi hành"]
+  A2 -->|"từ chối"| STOP["Dừng lại, có lý do"]`},
+
+{g:'admin', title:'Tìm kiếm nhật ký audit', badge:'Ops',
+ desc:'Mọi thao tác quan trọng (ai duyệt gì, ai đổi chính sách gì, khi nào) đều được ghi lại vĩnh viễn và không thể sửa. Màn này cho phép tìm kiếm theo từ khoá để tra soát khi cần.',
+ steps:['Mở màn Audit log','Gõ từ khoá tìm kiếm (vd: tên người, loại thao tác)','Xem kết quả kèm thời gian, người thực hiện, lý do'],
+ mermaid:`flowchart LR
+  E["Mọi thao tác nhạy cảm"] --> LOG["Ghi vào audit_logs (không sửa được)"]
+  U["Nhân viên"] -->|"tìm kiếm từ khoá"| LOG
+  LOG --> R["Kết quả: ai · làm gì · khi nào · vì sao"]`},
+
+{g:'admin', title:'Quản lý tổ chức &amp; chính sách', badge:'Ops',
+ desc:'Đội vận hành có thể xem toàn bộ các tổ chức doanh nghiệp đang hoạt động trên hệ thống và chính sách duyệt chi của từng tổ chức, hỗ trợ khi khách hàng doanh nghiệp cần trợ giúp.',
+ steps:['Mở danh sách tổ chức','Xem thành viên, vai trò, chính sách hiện tại của một tổ chức','Hỗ trợ điều chỉnh khi khách hàng yêu cầu'],
+ mermaid:`flowchart LR
+  L["Danh sách tổ chức"] --> O["Chọn 1 tổ chức"]
+  O --> M["Thành viên + vai trò"]
+  O --> P["Chính sách duyệt chi hiện tại"]`},
+
+{g:'platform', title:'Phát hiện gian lận tự động', badge:'Nền tảng',
+ desc:'Chạy ngầm trên mọi giao dịch. Các luật cứng và rõ ràng (chuyển quá nhanh liên tiếp, số tiền tăng đột biến, thiết bị lạ, giờ bất thường) được kiểm tra trước; chỉ khi rơi vào "vùng xám" mới hỏi thêm AI để giải thích, và AI không bao giờ tự ý chặn tiền — quyết định cuối luôn là luật cứng hoặc con người.',
+ steps:['Mọi giao dịch đi qua bước kiểm tra gian lận','Luật cứng chấm điểm rủi ro trước','Điểm ở vùng không chắc chắn → hỏi thêm AI để giải thích','Quyết định chặn/cho qua luôn do luật cứng hoặc con người quyết, không phải AI'],
+ mermaid:`flowchart LR
+  T["Giao dịch"] --> R["Luật cứng: tốc độ / số tiền / thiết bị"]
+  R -->|"rõ ràng an toàn"| OK["Cho qua"]
+  R -->|"vùng xám"| AI["AI giải thích thêm"]
+  R -->|"rõ ràng nguy hiểm"| BLOCK["Chặn ngay"]
+  AI --> H["Người xét duyệt quyết định cuối"]`},
+
+{g:'platform', title:'An toàn khi bấm lại (Idempotency)', badge:'Nền tảng',
+ desc:'Mọi thao tác tạo ra tiền (nạp tiền, chuyển tiền, tạo lệnh chi...) đều mang một "mã yêu cầu" duy nhất. Nếu vì mất mạng người dùng bấm gửi lại y hệt, hệ thống nhận ra đây là cùng một yêu cầu và trả lại đúng kết quả cũ — không bao giờ trừ/cộng tiền hai lần.',
+ steps:['App gắn 1 mã ngẫu nhiên duy nhất cho mỗi yêu cầu chuyển tiền','Gửi yêu cầu lên server','Nếu gửi lại đúng mã đó lần nữa: server trả lại kết quả giao dịch gốc, không tạo giao dịch mới'],
+ mermaid:`flowchart LR
+  A["Yêu cầu #1 (mã X)"] --> S["Server xử lý, tạo giao dịch"]
+  B["Yêu cầu #2 (cùng mã X, do mất mạng)"] --> C{"Mã X đã xử lý chưa?"}
+  C -->|"rồi"| R["Trả lại kết quả cũ, KHÔNG tạo mới"]`},
+
+{g:'platform', title:'Tự phục hồi khi có sự cố', badge:'Nền tảng',
+ desc:'Nếu một giao dịch đang xử lý mà máy chủ xử lý bước đó gặp sự cố giữa chừng, có một tiến trình chạy định kỳ tự phát hiện các giao dịch "bị bỏ quên" và tiếp tục xử lý lại từ đúng bước đang dở dang — không có giao dịch nào lơ lửng mãi mãi, và không giao dịch nào bị xử lý hai lần.',
+ steps:['Giao dịch dừng lại giữa chừng do sự cố (mất mạng, máy chủ restart...)','Tiến trình quét định kỳ (mỗi vài phút) tìm giao dịch bị "kẹt" quá lâu','Giao dịch được thử lại đúng từ bước đang dở, không lặp lại các bước đã xong','Nếu vẫn thất bại sau nhiều lần thử: giao dịch được đóng lại rõ ràng là thất bại, có hoàn tiền nếu cần'],
+ mermaid:`flowchart LR
+  X["Giao dịch bị kẹt giữa chừng"] --> S["Tiến trình quét định kỳ"]
+  S --> C["Nhận diện giao dịch kẹt quá lâu"]
+  C --> RT["Thử lại đúng bước đang dở"]
+  RT -->|"thành công"| DONE["Hoàn tất"]
+  RT -->|"vẫn lỗi, hết lượt thử"| FAIL["Đóng thất bại rõ ràng + hoàn tiền nếu cần"]`},
+];
+
+document.documentElement.dataset.theme = document.documentElement.dataset.theme || '';
+
+function initTheme(){
+  try{
+    const saved = localStorage.getItem('hpay-guide-theme');
+    if(saved) document.documentElement.setAttribute('data-theme', saved);
+  }catch(e){}
+}
+initTheme();
+
+function renderNav(){
+  const nav = document.getElementById('rolenav');
+  nav.innerHTML = GROUPS.map(g=>`<a href="#${g.id}">${g.title.replace(/^[^ ]+ /,'')}</a>`).join('');
+}
+
+function renderSections(){
+  const root = document.getElementById('sections');
+  root.innerHTML = GROUPS.map(g=>{
+    const items = FEATURES.filter(f=>f.g===g.id);
+    const cards = items.map((f,i)=>`
+      <button class="card" data-idx="${FEATURES.indexOf(f)}">
+        <span class="num">${String(i+1).padStart(2,'0')}</span>
+        <span class="badge">${f.badge}</span>
+        <span class="title">${f.title}</span>
+        <span class="sub">${f.desc.slice(0,90).replace(/<[^>]+>/g,'')}…</span>
+      </button>`).join('');
+    return `<section class="role ${g.cls}" id="${g.id}">
+      <div class="role-head"><h2>${g.title}</h2><span class="role-tag">${g.tag}</span></div>
+      <p class="role-desc">${g.desc}</p>
+      <div class="cards">${cards}</div>
+    </section>`;
+  }).join('');
+
+  root.querySelectorAll('.card').forEach(btn=>{
+    btn.addEventListener('click', ()=> openModal(parseInt(btn.dataset.idx,10)));
+  });
+}
+
+const diagramCache = {};
+async function openModal(idx){
+  const f = FEATURES[idx];
+  const overlay = document.getElementById('overlay');
+  document.getElementById('m-badge').textContent = f.badge;
+  document.getElementById('m-badge').style.background = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).background;
+  document.getElementById('m-badge').style.color = getComputedStyle(document.querySelector('.g-'+f.g+' .role-tag')).color;
+  document.getElementById('m-title').innerHTML = f.title;
+  document.getElementById('m-desc').innerHTML = f.desc;
+  document.getElementById('m-steps').innerHTML = f.steps.map((s,i)=>`<li><span class="dot">${i+1}</span><span class="txt">${s}</span></li>`).join('');
+  const dbox = document.getElementById('m-diagram');
+  dbox.innerHTML = '<span class="loading">Đang dựng sơ đồ…</span>';
+  overlay.classList.add('open');
+
+  if(diagramCache[idx]){
+    dbox.innerHTML = diagramCache[idx];
+  } else {
+    try{
+      const themeAttr = document.documentElement.getAttribute('data-theme');
+      const isDark = themeAttr ? themeAttr === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      mermaid.initialize({startOnLoad:false, theme: isDark ? 'dark' : 'neutral', flowchart:{curve:'basis'}, themeVariables:{fontSize:'13px'}});
+      const {svg} = await mermaid.render('dg-'+idx+'-'+Date.now(), f.mermaid);
+      diagramCache[idx] = svg;
+      dbox.innerHTML = svg;
+    }catch(e){
+      dbox.innerHTML = '<span class="loading">Không dựng được sơ đồ.</span>';
+    }
+  }
+}
+
+document.getElementById('m-close').addEventListener('click', ()=>{
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') document.getElementById('overlay').classList.remove('open');
+});
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') document.getElementById('overlay').classList.remove('open');
+});
+
+renderNav();
+renderSections();
+</script>
+</body>
+</html>
